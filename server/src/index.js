@@ -5,6 +5,7 @@ import { clerkMiddleware } from '@clerk/express';
 
 import resumeRoutes from './routes/resumeRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5050;
@@ -22,6 +23,7 @@ app.use(clerkMiddleware());
 
 app.use('/api/user', userRoutes);
 app.use('/api/users', resumeRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

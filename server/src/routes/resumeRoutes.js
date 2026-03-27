@@ -166,9 +166,39 @@ router.patch('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
         portfolio: req.body.portfolio,
         summary: req.body.summary,
         education: req.body.education,
-        eduDesc: req.body.edu_desc,
-        eduHonors: req.body.edu_honors,
-        eduLocation: req.body.edu_location,
+        eduDesc: req.body.eduDesc,
+        eduHonors: req.body.eduHonors,
+        eduLocation: req.body.eduLocation,
+
+        experiences: {
+          deleteMany: {},
+          create: (req.body.experience || []).map((exp, expIndex) => ({
+            company: exp.company,
+            role: exp.role,
+            date: exp.date,
+            order: expIndex,
+            bullets: {
+              create: (exp.bullets || []).map((bullet, bulletIndex) => ({
+                text: bullet,
+                order: bulletIndex,
+              })),
+            },
+          })),
+        },
+
+        skillGroups: {
+          deleteMany: {},
+          create: (req.body.skills || []).map((group, groupIndex) => ({
+            category: group.category,
+            order: groupIndex,
+            items: {
+              create: (group.items || []).map((item, itemIndex) => ({
+                name: item,
+                order: itemIndex,
+              })),
+            },
+          })),
+        },
       },
       include: {
         experiences: {

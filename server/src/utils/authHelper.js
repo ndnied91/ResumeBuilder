@@ -11,6 +11,7 @@ export const getDbUserFromAuth = async (req, prisma) => {
 };
 
 export const validateUserAccess = (dbUser, routeUserId) => {
+  console.log('compare', dbUser.id, routeUserId);
   if (!dbUser) {
     return {
       ok: false,
