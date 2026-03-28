@@ -13,7 +13,6 @@ export const Resume = () => {
   const { currResume, setCurrResume, allResumes } = useAppContext();
   const [showEdit, setShowEdit] = useState(false);
 
-  console.log('curr resume is', currResume);
   const handlePrint = useReactToPrint({
     contentRef: resumeRef,
     documentTitle: `${currResume?.name?.replace(/\s+/g, '_') || 'Resume'}`,

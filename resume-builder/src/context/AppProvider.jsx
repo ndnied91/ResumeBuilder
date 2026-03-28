@@ -28,14 +28,10 @@ export function AppProvider({ children }) {
 
       const data = await res.json();
 
-      console.log('raw:', data);
-
-      if (data.length > 0) {
+      if (data.length || []) {
         setAllResumes(data);
         const resume = data[0]; // take first resume for now
         const mapped = mapResumeToState(resume);
-        // console.log('mapped:', mapped);
-
         setCurrResume(mapped);
       }
     } catch (e) {
@@ -60,7 +56,6 @@ export function AppProvider({ children }) {
         return;
       }
 
-      console.log('data job apps', data);
       setJobApps(data);
     } catch (error) {
       console.error('Failed to fetch job apps:', error);
@@ -86,8 +81,6 @@ export function AppProvider({ children }) {
 
       const data = await response.json();
 
-      console.log(data);
-
       if (!response.ok) {
         console.error('Save failed:', data.message);
         return;
@@ -95,10 +88,7 @@ export function AppProvider({ children }) {
 
       // add new resume to all resumes
       setAllResumes((prev) => [...prev, data]);
-
       await getJobApps(getToken, userIds.dbId);
-
-      console.log('Resume saved successfully');
     } catch (error) {
       console.error('Failed to save resume:', error);
     }

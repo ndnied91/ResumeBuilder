@@ -2,7 +2,9 @@ import { useAppContext } from '../context/useAppContext';
 import { useAuth } from '@clerk/clerk-react';
 import { formatResumeForClient } from '../utils/helper';
 import { FaTrashCan } from 'react-icons/fa6';
-import { useEffect, useState } from 'react';
+import { LuPencil } from 'react-icons/lu';
+import { FaRegSave } from 'react-icons/fa';
+import { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import toast from 'react-hot-toast';
 
@@ -20,6 +22,64 @@ export const JobTable = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [filter, setFilter] = useState('All');
+
+  const [editingJobId, setEditingJobId] = useState(null);
+  const [editValues, setEditValues] = useState({
+    company: '',
+    jobTitle: '',
+  });
+
+  const startEditingJob = (job) => {
+    setEditingJobId(job.id);
+    setEditValues({
+      company: job.company || '',
+      jobTitle: job.jobTitle || '',
+    });
+  };
+
+  const cancelEditingJob = () => {
+    setEditingJobId(null);
+    setEditValues({
+      company: '',
+      jobTitle: '',
+    });
+  };
+
+  const saveEditedJob = async (jobId) => {
+    try {
+      const token = await getToken();
+
+      const res = await fetch(`/api/job-applications/${jobId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          company: editValues.company,
+          jobTitle: editValues.jobTitle,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 200) {
+        toast.success('Job updated successfully!', {
+          duration: 2000,
+        });
+      } else {
+        toast.error(data?.message || 'Failed to delete resume');
+      }
+
+      setJobApps((prev) =>
+        prev.map((job) => (job.id === jobId ? { ...job, ...data } : job)),
+      );
+
+      cancelEditingJob();
+    } catch (error) {
+      console.error('Failed to update job:', error);
+    }
+  };
 
   const filteredJobs =
     filter === 'All' ? jobApps : jobApps.filter((job) => job.status === filter);
@@ -108,6 +168,10 @@ export const JobTable = () => {
     } catch (error) {
       console.error('Error deleting job:', error);
     }
+  };
+
+  const editJob = (job) => {
+    console.log('current job', job);
   };
 
   return (
@@ -210,6 +274,7 @@ export const JobTable = () => {
                 <th className="px-4 py-3 font-medium text-gray-600">
                   View Resume
                 </th>
+                <th className="px-4 py-3 font-medium text-gray-600"> Edit </th>
                 <th className="px-4 py-3 font-medium text-gray-600">
                   {' '}
                   Delete{' '}
@@ -230,12 +295,50 @@ export const JobTable = () => {
                       isSelectedResume ? 'bg-blue-50' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {job.company}
+                    {/* Company */}
+                    <td className="px-4 py-3 w-[250px]">
+                      <div className="px-2 py-1">
+                        {editingJobId === job.id ? (
+                          <input
+                            value={editValues.company}
+                            onChange={(e) =>
+                              setEditValues((prev) => ({
+                                ...prev,
+                                company: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-md border border-gray-300 text-sm outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                          />
+                        ) : (
+                          <span className="block text-gray-800 font-medium">
+                            {job.company}
+                          </span>
+                        )}
+                      </div>
                     </td>
 
-                    <td className="px-4 py-3 text-gray-700">{job.jobTitle}</td>
+                    {/* Role */}
+                    <td className="px-4 py-3 w-[250px]">
+                      {editingJobId === job.id ? (
+                        <input
+                          type="text"
+                          value={editValues.jobTitle}
+                          onChange={(e) =>
+                            setEditValues((prev) => ({
+                              ...prev,
+                              jobTitle: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-md border border-gray-300 text-sm outline-none focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                        />
+                      ) : (
+                        <span className="block w-full text-gray-700">
+                          {job.jobTitle}
+                        </span>
+                      )}
+                    </td>
 
+                    {/* Status */}
                     <td className="px-4 py-3">
                       <select
                         value={job.status}
@@ -259,12 +362,14 @@ export const JobTable = () => {
                       </select>
                     </td>
 
+                    {/* Applied Date */}
                     <td className="px-4 py-3 text-gray-600">
                       {job.dateApplied
                         ? new Date(job.dateApplied).toLocaleDateString()
                         : '-'}
                     </td>
 
+                    {/* Link */}
                     <td className="px-4 py-3">
                       {job.jobLink ? (
                         <a
@@ -281,6 +386,7 @@ export const JobTable = () => {
                       )}
                     </td>
 
+                    {/* View Resume */}
                     <td className="px-4 py-3">
                       {resumeExists(job.resumeId) ? (
                         <button
@@ -294,11 +400,32 @@ export const JobTable = () => {
                       )}
                     </td>
 
+                    {/* Edit */}
+                    <td className="px-4 py-3">
+                      {editingJobId === job.id ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => saveEditedJob(job.id)}
+                            className="text-sm text-gray-500 hover:text-gray-800"
+                          >
+                            <FaRegSave size={20} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => startEditingJob(job)}
+                          className="text-sm text-gray-500 hover:text-gray-800"
+                        >
+                          <LuPencil size={20} />
+                        </button>
+                      )}
+                    </td>
+
+                    {/* Delete */}
                     <td className="px-4 py-3">
                       <button
-                        // onClick={() => handleDeleteJob(job.id)}
                         onClick={() => openDeleteModal(job.id)}
-                        className="text-red-500 hover:text-red-700 transition cursor-pointer"
+                        className="cursor-pointer text-red-500 transition hover:text-red-700"
                       >
                         <FaTrashCan size={20} />
                       </button>
