@@ -71,7 +71,8 @@ export const blankResume = {
 
 export const seedResume = {
   name: 'Danny Niedzwiedzki',
-  resumeId: null,
+  jobLink: 'http://daniel.com',
+  resumeId: '123',
   title: 'Primary',
   header:
     'Woodbridge, NJ | linkedin.com/in/daniel-niedzwiedzki | github.com/ndnied91',
@@ -167,3 +168,22 @@ export const seedResume = {
   edu_honors: 'Lambda Alpha Sigma Honors Society Recipient',
   edu_location: 'Union, New Jersey',
 };
+
+export const formatResumeForClient = (resume) => ({
+  ...resume,
+  resumeId: resume.resumeId || resume.id,
+  experience: (resume.experience || resume.experiences || []).map((job) => ({
+    role: job.role,
+    company: job.company,
+    date: job.date,
+    bullets: (job.bullets || []).map((bullet) =>
+      typeof bullet === 'string' ? bullet : bullet.text,
+    ),
+  })),
+  skills: (resume.skills || resume.skillGroups || []).map((group) => ({
+    category: group.category,
+    items: (group.items || []).map((item) =>
+      typeof item === 'string' ? item : item.name,
+    ),
+  })),
+});

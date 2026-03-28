@@ -1,45 +1,14 @@
-import { useUser } from '@clerk/clerk-react';
 import { useAppContext } from '../context/useAppContext';
-import { seedResume } from '../utils/helper';
 import { JobTable } from './JobTable';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 export const Dashboard = () => {
   const { user } = useUser();
-  const { currResume, allResumes, setAllResumes, setCurrResume } =
-    useAppContext();
+  const { allResumes, createResume, jobApps } = useAppContext();
 
-  const handleSaveResume = async () => {
-    setCurrResume(seedResume);
+  const { getToken } = useAuth();
 
-    try {
-      const response = await fetch('/api/users/resumes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clerkId: user.id,
-          currResume: seedResume,
-        }),
-      });
-
-      const data = await response.json();
-
-      console.log(data);
-
-      if (!response.ok) {
-        console.error('Save failed:', data.message);
-        return;
-      }
-
-      // add new resume to all resumes
-      setAllResumes((prev) => [...prev, data]);
-
-      console.log('Resume saved successfully');
-    } catch (error) {
-      console.error('Failed to save resume:', error);
-    }
-  };
+  // console.log(jobApps.status);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -59,7 +28,9 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Jobs Applied</p>
-            <h2 className="mt-3 text-3xl font-bold text-gray-900">0</h2>
+            <h2 className="mt-3 text-3xl font-bold text-gray-900">
+              {jobApps ? jobApps.length : 0}{' '}
+            </h2>
             <p className="mt-2 text-sm text-gray-400">Applications submitted</p>
           </div>
 
@@ -73,7 +44,9 @@ export const Dashboard = () => {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm font-medium text-gray-500">Interviews</p>
-            <h2 className="mt-3 text-3xl font-bold text-gray-900">0</h2>
+            <h2 className="mt-3 text-3xl font-bold text-gray-900">
+              {jobApps.filter((job) => job.status === 'Interviewing').length}
+            </h2>
             <p className="mt-2 text-sm text-gray-400">
               Interview stages reached
             </p>
@@ -115,27 +88,18 @@ export const Dashboard = () => {
                 Upload Resume
               </button>
 
-              <button className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 cursor-pointer">
-                Generate Resume
-              </button>
-
-              <button className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 cursor-pointer">
-                Add Job Link
-              </button>
-
               <div className="flex gap-3">
                 <button
                   className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 cursor-pointer"
-                  onClick={handleSaveResume}
+                  onClick={() => createResume(getToken)}
                 >
                   Seed Resume
                 </button>
               </div>
             </div>
           </div>
-
-          <JobTable />
         </div>
+        <JobTable />
       </div>
     </div>
   );

@@ -10,7 +10,8 @@ import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
-  const { userPane, getResumes, setUserIds } = useAppContext();
+  const { userPane, getResumes, setUserIds, userIds, getJobApps } =
+    useAppContext();
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
 
@@ -34,13 +35,22 @@ function App() {
 
       const userData = await userRes.json();
       setUserIds({ clerk: userData.clerkId, dbId: userData.id });
-
-      // 2. fetch resumes
       await getResumes(getToken);
     };
 
     init();
   }, [isSignedIn, user]);
+
+  //used for getting job apps after user has been authenticated
+  useEffect(() => {
+    if (!userIds?.dbId) return;
+
+    const fetchData = async () => {
+      await getJobApps(getToken, userIds.dbId);
+    };
+
+    fetchData();
+  }, [userIds?.dbId]);
 
   const panes = {
     generate: <GenerateResume />,

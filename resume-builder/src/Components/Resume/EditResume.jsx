@@ -21,7 +21,6 @@ export const EditResume = () => {
   const [showModal, setShowModal] = useState(false);
 
   const updateField = (field, value) => {
-    console.log('in update field', field, value);
     setCurrResume((prev) => ({
       ...prev,
       [field]: value,
