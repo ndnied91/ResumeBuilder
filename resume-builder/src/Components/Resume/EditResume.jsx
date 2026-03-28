@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../../context/useAppContext';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { FaTrashCan } from 'react-icons/fa6';
 import { LuSaveAll } from 'react-icons/lu';
+import { FaMinus } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import FocusTrap from 'focus-trap-react';
 
 import { blankResume, mapResumeToState } from '../../utils/helper';
+import { Input } from './Input';
 
 export const EditResume = () => {
   const { currResume, setCurrResume, userIds, allResumes, setAllResumes } =
@@ -16,7 +18,6 @@ export const EditResume = () => {
   const { getToken, isSignedIn } = useAuth();
 
   const [isSaving, isSetSaving] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
 
   const updateField = (field, value) => {
@@ -87,6 +88,45 @@ export const EditResume = () => {
     });
   };
 
+  const removeBullet = (jobIndex, bulletIndex) => {
+    setCurrResume((prev) => {
+      const updatedExperience = [...prev.experience];
+      const updatedBullets = updatedExperience[jobIndex].bullets.filter(
+        (_, index) => index !== bulletIndex,
+      );
+
+      updatedExperience[jobIndex] = {
+        ...updatedExperience[jobIndex],
+        bullets: updatedBullets,
+      };
+
+      return {
+        ...prev,
+        experience: updatedExperience,
+      };
+    });
+  };
+
+  const addSkill = () => {
+    setCurrResume((prev) => ({
+      ...prev,
+      skills: [
+        ...prev.skills,
+        {
+          name: '',
+          items: [],
+        },
+      ],
+    }));
+  };
+
+  const removeSkill = (indexToRemove) => {
+    setCurrResume((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((_, i) => i !== indexToRemove),
+    }));
+  };
+
   const addExperience = () => {
     setCurrResume((prev) => ({
       ...prev,
@@ -152,7 +192,6 @@ export const EditResume = () => {
 
     isSetSaving(true);
     const token = await getToken(); // from Clerk
-
     const res = await fetch(
       `/api/users/${userIds.dbId}/resumes/${currResume.resumeId}`,
       {
@@ -315,63 +354,82 @@ export const EditResume = () => {
       </div>
 
       <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Title
-          </label>
-          <input
-            type="text"
-            value={currResume.title}
-            onChange={(e) => updateField('title', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-          />
-        </div>
+        {currResume.jobLink && (
+          <div className="">
+            <p className="mb-1  text-sm font-medium text-gray-700 mt-2 ">
+              Job Link
+            </p>
+            <a
+              href={currResume.jobLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none transition hover:underline focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            >
+              <span className="truncate">{currResume.jobLink}</span>
+
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M14 3h7m0 0v7m0-7L10 14"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 10v11h11"
+                />
+              </svg>
+            </a>
+          </div>
+        )}
+
+        <Input
+          label="Title"
+          name="title"
+          value={currResume.title}
+          updateField={updateField}
+        />
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Name
-          </label>
-          <input
-            type="text"
+          <Input
+            label="Name"
+            name="name"
             value={currResume.name}
-            onChange={(e) => updateField('name', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            updateField={updateField}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Subtitle
-          </label>
-          <input
-            type="text"
+          <Input
+            label="Subtitle"
+            name="header"
             value={currResume.header}
-            onChange={(e) => updateField('header', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            updateField={updateField}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Contact
-          </label>
-          <input
-            type="text"
+          <Input
+            label="Contact"
+            name="contact"
             value={currResume.contact}
-            onChange={(e) => updateField('contact', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            updateField={updateField}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Portfolio
-          </label>
-          <input
-            type="text"
+          <Input
+            label="Portfolio"
+            name="portfolio"
             value={currResume.portfolio}
-            onChange={(e) => updateField('portfolio', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            updateField={updateField}
           />
         </div>
 
@@ -387,8 +445,8 @@ export const EditResume = () => {
           />
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
+        <div className="">
+          <label className="mb-1 block text-sm font-medium text-gray-700 ">
             Skills
           </label>
 
@@ -397,13 +455,22 @@ export const EditResume = () => {
               key={index}
               className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4"
             >
-              <input
-                type="text"
-                value={skillGroup.category}
-                onChange={(e) => updateSkillCategory(index, e.target.value)}
-                placeholder="Category"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={skillGroup.category}
+                  onChange={(e) => updateSkillCategory(index, e.target.value)}
+                  placeholder="Category"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                <button
+                  className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 cursor-pointer"
+                  onClick={() => removeSkill(index)}
+                >
+                  {' '}
+                  <FaMinus />
+                </button>
+              </div>
 
               <textarea
                 rows={3}
@@ -414,6 +481,13 @@ export const EditResume = () => {
               />
             </div>
           ))}
+          <button
+            className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-800 cursor-pointer"
+            onClick={addSkill}
+          >
+            {' '}
+            Add skill{' '}
+          </button>
         </div>
 
         <div>
@@ -471,15 +545,24 @@ export const EditResume = () => {
 
                 <div className="space-y-2">
                   {job.bullets.map((bullet, bulletIndex) => (
-                    <textarea
-                      key={bulletIndex}
-                      rows={3}
-                      value={bullet}
-                      onChange={(e) =>
-                        updateBullet(jobIndex, bulletIndex, e.target.value)
-                      }
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
-                    />
+                    <div key={bulletIndex} className="flex items-start gap-2">
+                      <textarea
+                        rows={3}
+                        value={bullet}
+                        onChange={(e) =>
+                          updateBullet(jobIndex, bulletIndex, e.target.value)
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeBullet(jobIndex, bulletIndex)}
+                        className="mt-1 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 cursor-pointer"
+                      >
+                        <FaMinus />
+                      </button>
+                    </div>
                   ))}
                 </div>
 

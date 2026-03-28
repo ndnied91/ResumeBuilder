@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
 import { AppContext } from './app-context';
 import { mapResumeToState, blankResume } from '../utils/helper';
-import { useUser } from '@clerk/clerk-react';
+// import { useUser } from '@clerk/clerk-react';
 
 export function AppProvider({ children }) {
   const [resumeFile, setResumeFile] = useState(null);
   const [jobLink, setJobLink] = useState('');
   const [userPane, setUserPane] = useState('dashboard');
-  // const [isSignedIn, setIsSignedIn] = useState(true);
   const [userIds, setUserIds] = useState();
   const [allResumes, setAllResumes] = useState([]);
   const [currResume, setCurrResume] = useState(blankResume);
 
-  const { user, isSignedIn } = useUser();
+  // const { user, isSignedIn } = useUser();
 
   const getResumes = async (getToken) => {
     try {
@@ -37,7 +36,7 @@ export function AppProvider({ children }) {
         setAllResumes(data);
         const resume = data[0]; // take first resume for now
         const mapped = mapResumeToState(resume);
-        console.log('mapped:', mapped);
+        // console.log('mapped:', mapped);
 
         setCurrResume(mapped);
       }
@@ -57,13 +56,11 @@ export function AppProvider({ children }) {
         setJobLink,
         userPane,
         setUserPane,
-        // isSignedIn,
-        // setIsSignedIn,
         currResume,
         setCurrResume,
         allResumes,
         setAllResumes,
-        getResumes, // 👈 expose it
+        getResumes,
       }}
     >
       {children}

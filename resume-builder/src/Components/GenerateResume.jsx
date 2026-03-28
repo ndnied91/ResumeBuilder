@@ -1,10 +1,25 @@
-import React from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../context/useAppContext';
 import { mapResumeToState } from '../utils/helper';
+import { useUser, useAuth } from '@clerk/clerk-react';
+import toast from 'react-hot-toast';
 
 export const GenerateResume = () => {
-  const { jobLink, setJobLink, currResume, setCurrResume, allResumes } =
-    useAppContext();
+  const { user } = useUser();
+  const {
+    jobLink,
+    setJobLink,
+    currResume,
+    setCurrResume,
+    allResumes,
+    userIds,
+    setAllResumes,
+    setUserPane,
+  } = useAppContext();
+
+  const { getToken, isSignedIn } = useAuth();
+
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSelectResume = (resumeId) => {
     const found = allResumes.find((r) => r.id === resumeId);
@@ -14,9 +29,49 @@ export const GenerateResume = () => {
     setCurrResume(mapped);
   };
 
-  const generateResume = () => {
-    //api call to backend to generate AI Call
-    console.log('selected resume is', currResume);
+  const generateResume = async () => {
+    if (!isSignedIn || !user) return;
+
+    setIsGenerating(true);
+
+    try {
+      const token = await getToken();
+
+      const response = await fetch('/api/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: userIds.dbId,
+          currResume,
+          jobLink,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data?.message || 'Failed to generate resume');
+        return;
+      }
+
+      // console.log('AI response:', data);
+      setCurrResume(mapResumeToState(data));
+      setAllResumes((prev) => [...prev, data]);
+
+      toast.success('Resume generated successfully!', {
+        duration: 2000,
+      });
+
+      setUserPane('resume'); //brings user to new resume
+    } catch (error) {
+      console.error('Failed to generate resume:', error);
+      toast.error('Failed to generate resume');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -82,10 +137,19 @@ export const GenerateResume = () => {
           {/* Action */}
           <section className="flex justify-end">
             <button
-              className="h-11 rounded-lg bg-gray-900 px-6 text-sm font-medium text-white transition hover:bg-gray-800 cursor-pointer"
               onClick={generateResume}
+              disabled={isGenerating}
+              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white transition  ${
+                isGenerating
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-black hover:bg-gray-800 cursor-pointer'
+              }`}
             >
-              Generate Resume
+              {isGenerating && (
+                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin " />
+              )}
+
+              {isGenerating ? 'Generating...' : 'Generate Resume'}
             </button>
           </section>
         </div>

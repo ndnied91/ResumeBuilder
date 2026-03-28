@@ -1,10 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { useAppContext } from '../../context/useAppContext';
 import { MdModeEdit } from 'react-icons/md';
 import { FaRegFilePdf } from 'react-icons/fa6';
-import { LuSaveAll } from 'react-icons/lu';
-import { useUser, useAuth } from '@clerk/clerk-react';
 import { FormatPreview } from './ResumePreview';
 import { EditResume } from './EditResume';
 import { blankResume, mapResumeToState } from '../../utils/helper';
@@ -15,6 +13,7 @@ export const Resume = () => {
   const { currResume, setCurrResume, allResumes } = useAppContext();
   const [showEdit, setShowEdit] = useState(false);
 
+  console.log('curr resume is', currResume);
   const handlePrint = useReactToPrint({
     contentRef: resumeRef,
     documentTitle: `${currResume?.name?.replace(/\s+/g, '_') || 'Resume'}`,

@@ -1,7 +1,4 @@
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
-
 import SideMenu from './SideMenu';
-
 import { useAppContext } from '../context/useAppContext';
 import { GenerateResume } from './GenerateResume';
 import { Resume } from './Resume/Resume';
@@ -9,7 +6,7 @@ import { Settings } from './Settings';
 import { useEffect } from 'react';
 import { Dashboard } from './Dashboard';
 import { HomePage } from './HomePage';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';
 
 function App() {

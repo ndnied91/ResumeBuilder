@@ -12,6 +12,7 @@ export const mapResumeToState = (resume) => {
     edu_desc: resume.eduDesc,
     edu_honors: resume.eduHonors,
     edu_location: resume.eduLocation,
+    jobLink: resume.jobLink,
 
     experience: resume.experiences.map((exp) => ({
       role: exp.role,

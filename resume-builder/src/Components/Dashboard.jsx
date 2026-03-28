@@ -1,16 +1,16 @@
-import React, { useEffect } from 'react';
-import { useUser, useAuth } from '@clerk/clerk-react';
+import { useUser } from '@clerk/clerk-react';
 import { useAppContext } from '../context/useAppContext';
 import { seedResume } from '../utils/helper';
+import { JobTable } from './JobTable';
 
 export const Dashboard = () => {
   const { user } = useUser();
-  const { isSignedIn } = useAuth();
-  const { currResume, setUserIds, allResumes, setAllResumes, setCurrResume } =
+  const { currResume, allResumes, setAllResumes, setCurrResume } =
     useAppContext();
 
   const handleSaveResume = async () => {
     setCurrResume(seedResume);
+
     try {
       const response = await fetch('/api/users/resumes', {
         method: 'POST',
@@ -19,7 +19,7 @@ export const Dashboard = () => {
         },
         body: JSON.stringify({
           clerkId: user.id,
-          currResume,
+          currResume: seedResume,
         }),
       });
 
@@ -133,6 +133,8 @@ export const Dashboard = () => {
               </div>
             </div>
           </div>
+
+          <JobTable />
         </div>
       </div>
     </div>

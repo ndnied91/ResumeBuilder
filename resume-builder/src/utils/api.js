@@ -1,12 +1,7 @@
-// utils/api.js
-export const fetchWithAuth = async (url, options = {}, getToken) => {
-  const token = await getToken();
+import OpenAI from 'openai';
 
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: `Bearer ${token}`,
-    },
-  });
-};
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export default openai;
