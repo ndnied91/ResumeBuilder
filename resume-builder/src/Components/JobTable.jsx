@@ -2,12 +2,13 @@ import { useAppContext } from '../context/useAppContext';
 import { useAuth } from '@clerk/clerk-react';
 import { formatResumeForClient } from '../utils/helper';
 import { FaTrashCan } from 'react-icons/fa6';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import toast from 'react-hot-toast';
 
 export const JobTable = () => {
   const {
-    jobApps = [],
+    jobApps,
     setJobApps,
     allResumes,
     setCurrResume,
@@ -18,6 +19,10 @@ export const JobTable = () => {
   const { getToken } = useAuth();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState('');
+  const [filter, setFilter] = useState('All');
+
+  const filteredJobs =
+    filter === 'All' ? jobApps : jobApps.filter((job) => job.status === filter);
 
   const openDeleteModal = (jobId) => {
     setSelectedJobId(jobId);
@@ -88,9 +93,14 @@ export const JobTable = () => {
         },
       });
 
-      if (!res.ok) {
-        console.error('Failed to delete job');
-        return;
+      const data = await res.json();
+
+      if (res.status === 200) {
+        toast.success('Resume deleted successfully!', {
+          duration: 2000,
+        });
+      } else {
+        toast.error(data?.message || 'Failed to delete resume');
       }
 
       setShowDeleteModal(false);
@@ -129,14 +139,14 @@ export const JobTable = () => {
                   <div className="mt-6 flex justify-end gap-3">
                     <button
                       onClick={() => setShowDeleteModal(false)}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
                       Cancel
                     </button>
 
                     <button
                       onClick={handleDeleteJob}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 cursor-pointer"
                     >
                       Delete
                     </button>
@@ -154,6 +164,24 @@ export const JobTable = () => {
           <p className="mt-1 text-sm text-gray-500">
             Track where you applied and which resume was used
           </p>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['All', 'Applied', 'Interviewing', 'Rejected', 'Offer'].map(
+              (item) => (
+                <button
+                  key={item}
+                  onClick={() => setFilter(item)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out transform cursor-pointer ${
+                    filter === item
+                      ? 'scale-105 bg-gray-900 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105 active:scale-95'
+                  }`}
+                >
+                  {item}
+                </button>
+              ),
+            )}
+          </div>
         </div>
 
         <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
@@ -190,7 +218,7 @@ export const JobTable = () => {
             </thead>
 
             <tbody>
-              {jobApps.map((job) => {
+              {filteredJobs.map((job) => {
                 const isSelectedResume =
                   currResume &&
                   (currResume.resumeId || currResume.id) === job.resumeId;

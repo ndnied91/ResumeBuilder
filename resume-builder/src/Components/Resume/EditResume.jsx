@@ -295,14 +295,14 @@ export const EditResume = () => {
                   <div className="mt-6 flex justify-end gap-3">
                     <button
                       onClick={() => setShowModal(false)}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 cursor-pointer"
                     >
                       Cancel
                     </button>
 
                     <button
                       onClick={deleteResume}
-                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 cursor-pointer"
                     >
                       Delete
                     </button>
