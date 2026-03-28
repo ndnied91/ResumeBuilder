@@ -1,14 +1,25 @@
 //takes the AI generated resume and saved it to the database;
-export const saveGeneratedResume = async (aiResume, currResume, userId) => {
+export const saveGeneratedResume = async (
+  aiResume,
+  currResume,
+  userId,
+  jobLink,
+) => {
+  console.log('AI Resume in save generated resume', aiResume);
+
+  const parsedAIResume = JSON.parse(aiResume);
+  console.log('parsed', parsedAIResume);
+
   const resume = await prisma.resume.create({
     data: {
-      title: aiResume.title,
+      jobLink,
+      // title: parsedAIResume.notes.title,
       name: currResume.name, //stays the same
       header: currResume.header, //stays the same
       email: currResume.email, //stays the same
       contact: currResume.contact, //stays the same
       portfolio: currResume.portfolio, //stays the same
-      summary: aiResume.summary,
+      summary: parsedAIResume.summary,
       education: currResume.education, //stays the same
       eduDesc: currResume.edu_desc, //stays the same
       eduHonors: currResume.edu_honors, //stays the same
@@ -16,7 +27,7 @@ export const saveGeneratedResume = async (aiResume, currResume, userId) => {
       userId,
 
       experiences: {
-        create: (aiResume.experience || []).map((job, jobIndex) => ({
+        create: (parsedAIResume.experience || []).map((job, jobIndex) => ({
           role: job.role,
           company: job.company,
           date: job.date,
@@ -31,7 +42,7 @@ export const saveGeneratedResume = async (aiResume, currResume, userId) => {
       },
 
       skillGroups: {
-        create: (aiResume.skills || []).map((group, groupIndex) => ({
+        create: (parsedAIResume.skills || []).map((group, groupIndex) => ({
           category: group.category,
           order: groupIndex,
           items: {

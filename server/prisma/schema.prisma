@@ -6,6 +6,7 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
@@ -15,70 +16,90 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  resumes   Resume[]
+  resumes         Resume[]
+  jobApplications JobApplication[]
 }
 
 model Resume {
-  id           String       @id @default(cuid())
-  title        String       @default("Untitled Resume")
-  name         String       
-  header       String?
-  email        String?
-  contact      String?
-  portfolio    String?
-  summary      String?
-  education    String?
-  eduDesc      String?
-  eduHonors    String?
-  eduLocation  String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id          String   @id @default(cuid())
+  title       String   @default("Untitled Resume")
+  name        String
+  header      String?
+  email       String?
+  contact     String?
+  portfolio   String?
+  summary     String?
+  jobLink     String?
+  education   String?
+  eduDesc     String?
+  eduHonors   String?
+  eduLocation String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  experiences  Experience[]
-  skillGroups  SkillGroup[]
+  experiences     Experience[]
+  skillGroups     SkillGroup[]
+  jobApplications JobApplication[]
+}
+
+model JobApplication {
+  id          String    @id @default(cuid())
+  userId      String
+  resumeId    String?
+  company     String
+  jobTitle    String
+  jobLink     String?
+  dateApplied DateTime?
+  status      String    @default("Applied")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume Resume? @relation(fields: [resumeId], references: [id], onDelete: SetNull)
 }
 
 model Experience {
-  id        String   @id @default(cuid())
-  role      String
-  company   String
-  date      String
-  order     Int      @default(0)
+  id      String @id @default(cuid())
+  role    String
+  company String
+  date    String
+  order   Int    @default(0)
 
-  resumeId  String
-  resume    Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
-  bullets   Bullet[]
+  bullets Bullet[]
 }
 
 model Bullet {
-  id           String      @id @default(cuid())
-  text         String
-  order        Int         @default(0)
+  id    String @id @default(cuid())
+  text  String
+  order Int    @default(0)
 
   experienceId String
-  experience   Experience  @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
 }
 
 model SkillGroup {
-  id        String      @id @default(cuid())
-  category  String
-  order     Int         @default(0)
+  id       String @id @default(cuid())
+  category String
+  order    Int    @default(0)
 
-  resumeId  String
-  resume    Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
-  items     SkillItem[]
+  items SkillItem[]
 }
 
 model SkillItem {
-  id           String      @id @default(cuid())
-  name         String
-  order        Int         @default(0)
+  id    String @id @default(cuid())
+  name  String
+  order Int    @default(0)
 
   skillGroupId String
-  skillGroup   SkillGroup  @relation(fields: [skillGroupId], references: [id], onDelete: Cascade)
+  skillGroup   SkillGroup @relation(fields: [skillGroupId], references: [id], onDelete: Cascade)
 }

@@ -8,6 +8,7 @@ import {
   validateUserAccess,
   validateResumeOwnership,
 } from './../utils/authHelper.js';
+import { saveJobApplication } from '../../services/jobApplicationService.js';
 
 const router = express.Router();
 
@@ -85,6 +86,18 @@ router.post('/resumes', requireAuth(), async (req, res) => {
       },
     });
 
+    console.log('passed data', resume.id);
+
+    const savedApplication = await saveJobApplication({
+      userId: dbUser.id,
+      resumeId: resume.id,
+      company: 'Test Company',
+      jobTitle: 'Software Engineer',
+      jobLink: currResume.jobLink,
+    });
+
+    console.log('saved application ', savedApplication);
+
     return res.status(201).json(resume);
   } catch (error) {
     console.error('Error saving resume:', error);
@@ -124,7 +137,12 @@ router.get('/resumes', requireAuth(), async (req, res) => {
       },
     });
 
-    return res.status(200).json(resumes);
+    const formattedResumes = resumes.map((resume) => ({
+      ...resume,
+      resumeId: resume.id,
+    }));
+
+    return res.status(200).json(formattedResumes);
   } catch (error) {
     console.error('Error fetching resumes:', error);
     return res.status(500).json({ message: 'Failed to fetch resumes' });

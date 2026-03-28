@@ -1,4 +1,5 @@
 import { useAppContext } from '../context/useAppContext';
+import { HeatMap } from './HeatMap';
 import { JobTable } from './JobTable';
 import { useUser, useAuth } from '@clerk/clerk-react';
 
@@ -7,8 +8,6 @@ export const Dashboard = () => {
   const { allResumes, createResume, jobApps } = useAppContext();
 
   const { getToken } = useAuth();
-
-  // console.log(jobApps.status);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -70,10 +69,9 @@ export const Dashboard = () => {
             </div>
 
             <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-              <p className="text-sm text-gray-500">
-                No activity yet. Once you start uploading resumes or saving job
-                links, they’ll show up here.
-              </p>
+              {/* <div className="text-sm text-gray-500">
+                <HeatMap />
+              </div> */}
             </div>
           </div>
 
