@@ -11,8 +11,14 @@ import { blankResume, mapResumeToState } from '../../utils/helper';
 import { Input } from './Input';
 
 export const EditResume = () => {
-  const { currResume, setCurrResume, userIds, allResumes, setAllResumes } =
-    useAppContext();
+  const {
+    currResume,
+    setCurrResume,
+    userIds,
+    allResumes,
+    setAllResumes,
+    createResume,
+  } = useAppContext();
 
   const { user } = useUser();
   const { getToken, isSignedIn } = useAuth();
@@ -225,45 +231,45 @@ export const EditResume = () => {
     return data;
   };
 
-  const createResume = async () => {
-    if (!isSignedIn || !user) return;
+  // const createResume = async () => {
+  //   if (!isSignedIn || !user) return;
 
-    isSetSaving(true);
+  //   isSetSaving(true);
 
-    const token = await getToken(); // from Clerk
+  //   const token = await getToken(); // from Clerk
 
-    try {
-      const res = await fetch('/api/users/resumes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          clerkId: user.id,
-          currResume,
-        }),
-      });
+  //   try {
+  //     const res = await fetch('/api/users/resumes', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({
+  //         clerkId: user.id, //shouldn't need this
+  //         currResume,
+  //       }),
+  //     });
 
-      const data = await res.json();
-      isSetSaving(false);
+  //     const data = await res.json();
+  //     isSetSaving(false);
 
-      if (res.status === 201) {
-        toast.success('Resume saved successfully!', {
-          duration: 2000,
-        });
-      } else {
-        toast.error(data?.message || 'Failed to save resume');
-      }
+  //     if (res.status === 201) {
+  //       toast.success('Resume saved successfully!', {
+  //         duration: 2000,
+  //       });
+  //     } else {
+  //       toast.error(data?.message || 'Failed to save resume');
+  //     }
 
-      // add new resume to all resumes
-      setAllResumes((prev) => [...prev, data]);
+  //     // add new resume to all resumes
+  //     setAllResumes((prev) => [...prev, data]);
 
-      console.log('Resume saved successfully');
-    } catch (error) {
-      console.error('Failed to save resume:', error);
-    }
-  };
+  //     console.log('Resume saved successfully');
+  //   } catch (error) {
+  //     console.error('Failed to save resume:', error);
+  //   }
+  // };
 
   return (
     <div className="min-h-0 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -320,7 +326,11 @@ export const EditResume = () => {
         <div className="flex gap-6">
           <button
             type="button"
-            onClick={currResume.resumeId !== null ? updateResume : createResume}
+            onClick={
+              currResume.resumeId !== null
+                ? updateResume
+                : () => createResume(getToken)
+            }
             disabled={isSaving}
             className={`flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition ${
               isSaving

@@ -72,7 +72,7 @@ export const blankResume = {
 export const seedResume = {
   name: 'Danny Niedzwiedzki',
   jobLink: 'http://daniel.com',
-  resumeId: '123',
+  resumeId: '',
   title: 'Primary',
   header:
     'Woodbridge, NJ | linkedin.com/in/daniel-niedzwiedzki | github.com/ndnied91',
@@ -83,8 +83,8 @@ export const seedResume = {
     'Software Engineer with 4+ years of experience building scalable, user-friendly chat UI platforms serving over 1M monthly users. Experienced in designing and implementing custom, enterprise-level, reusable solutions across different clients, tailored to diverse requirements, with a focus on high-performance interfaces and cross-client frontend architecture.',
   experience: [
     {
-      role: 'Software Engineer | (Microsoft acquisition)',
-      company: 'HCL Tech',
+      role: 'Software Engineer',
+      company: 'HCL Tech (Microsoft acquisition)',
       date: 'April 2025 - Present',
       bullets: [
         'Led frontend development of a Next.js–based enterprise chat application built on the Microsoft Bot Framework, serving as a reusable foundation across multiple client portfolios.',

@@ -3,6 +3,7 @@ import cors from 'cors';
 import { clerkMiddleware, requireAuth, getAuth } from '@clerk/express';
 import { prisma } from '../../lib/prisma.js';
 import { generateResumeWithAI } from '../../services/aiService.js';
+import { saveJobApplication } from '../../services/jobApplicationService.js';
 
 import {
   getDbUserFromAuth,
@@ -46,6 +47,14 @@ router.post('/', requireAuth(), async (req, res) => {
     );
     //now save this into the database;
     console.log(savedResume);
+
+    await saveJobApplication({
+      userId: dbUser.id,
+      resumeId: savedResume.id,
+      company: 'AI Test Company',
+      jobTitle: 'Software Engineer',
+      jobLink: currResume.jobLink,
+    });
 
     return res.status(201).json(savedResume);
   } catch (error) {

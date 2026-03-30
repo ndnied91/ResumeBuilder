@@ -16,6 +16,7 @@ const router = express.Router();
 router.post('/resumes', requireAuth(), async (req, res) => {
   try {
     const { currResume } = req.body;
+    console.log('currResume', currResume);
 
     if (!currResume) {
       return res.status(400).json({ message: 'Missing currResume' });
@@ -85,8 +86,6 @@ router.post('/resumes', requireAuth(), async (req, res) => {
         },
       },
     });
-
-    console.log('passed data', resume.id);
 
     const savedApplication = await saveJobApplication({
       userId: dbUser.id,

@@ -37,17 +37,15 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
             {/* Summary */}
             <section className="mt-3">
               <h2 className="text-[15px] font-bold tracking-wider">Summary</h2>
-              <p className="mt-1 text-[12px] leading-[1.3]">
-                {currResume.summary}
-              </p>
+              <p className="text-[12px] leading-[1.3]">{currResume.summary}</p>
             </section>
 
             {/* Skills */}
-            <section className="mt-3">
+            <section className="mt-2">
               <h2 className="text-[15px] font-bold tracking-wider">
                 Technical Skills
               </h2>
-              <div className="mt-1 space-y-[2px]">
+              <div className="space-y-[2px]">
                 {currResume.skills
                   ? currResume.skills.map((skillGroup, index) => (
                       <p key={index} className="text-[12px] leading-[1.3]">
@@ -73,14 +71,15 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
                       <div key={index}>
                         <div className="flex items-start justify-between">
                           <p className="text-[12px] font-bold leading-[1.3]">
-                            {job?.role || ''}{' '}
-                            {job?.company ? `| ${job.company}` : ''}
+                            {job?.company ? ` ${job.company}` : ''}
                           </p>
                           <p className="text-[12px] font-bold leading-[1.3]">
                             {job?.date || ''}
                           </p>
                         </div>
-
+                        <p className="text-[12px] italic leading-tight">
+                          {job?.role || ''}
+                        </p>
                         <ul className="mt-[2px] list-disc pl-4 text-[12px] leading-[1.3]">
                           {job?.bullets?.length > 0 &&
                             job.bullets.map((bullet, bulletIndex) => (
@@ -94,12 +93,12 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
             </section>
 
             {/* Education */}
-            <section className="mt-3">
+            <section className="mt-1">
               <h2 className="text-[15px] font-bold tracking-wider">
                 Education
               </h2>
 
-              <div className="mt-1 flex justify-between">
+              <div className="flex justify-between">
                 <p className="text-[12px] font-bold leading-[1.3]">
                   {currResume.education}
                 </p>

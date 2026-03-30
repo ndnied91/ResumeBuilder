@@ -64,6 +64,7 @@ export function AppProvider({ children }) {
 
   const createResume = async (getToken) => {
     const token = await getToken();
+    console.log(seedResume);
 
     setCurrResume(seedResume);
 

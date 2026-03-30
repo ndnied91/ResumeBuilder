@@ -1,9 +1,11 @@
 import openai from '../lib/openai.js';
 
 export const generateResumeWithAI = async ({ currResume, jobLink }) => {
-  // console.log('in ai Service', currResume, jobLink);
   const prompt = `
 You are a resume assistant.
+
+You will receive a current resume and a job URL.
+Your job is to rewrite and optimize the resume so it better matches the job posting while staying completely truthful.
 
 Current resume:
 ${JSON.stringify(currResume, null, 2)}
@@ -11,20 +13,47 @@ ${JSON.stringify(currResume, null, 2)}
 Job URL:
 ${jobLink || 'No job URL provided'}
 
-Task:
-- Rewrite the resume to better match the job
-- Keep everything truthful
-- Improve clarity and impact
-- Ensure high ATS Score
+Instructions:
+- Keep all information truthful
+- Do not invent experience, companies, dates, projects, or technologies
+- Improve wording, clarity, and impact
+- Optimize for ATS
+- Preserve the resume's general structure
 - Return valid JSON only
+- Do not include markdown
+- Do not include commentary
+- Do not wrap the response in backticks
 
-Return format:
+Return JSON in this exact format:
 {
-  "summary": "",
-  "experience": [],
-  "skills": [],
-  "notes": []
+  "summary": "string",
+  "experience": [
+    {
+      "role": "string",
+      "company": "string",
+      "date": "string",
+      "bullets": ["string"]
+    }
+  ],
+  "skillGroups": [
+    {
+      "category": "string",
+      "items": ["string"]
+    }
+  ],
+  "notes": ["string"]
 }
+
+Rules:
+- "summary" must always be a string
+- "experience" must always be an array
+- "skillGroups" must always be an array
+- Each skill group must include a non-empty "category"
+- Each skill group must include an "items" array of strings
+- Do not use "skills" as a top-level field
+- Do not rename any fields
+- If there are no skill groups, return an empty array
+- If there are no notes, return an empty array
 `;
 
   const response = await openai.responses.create({
