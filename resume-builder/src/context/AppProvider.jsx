@@ -10,6 +10,7 @@ export function AppProvider({ children }) {
   const [allResumes, setAllResumes] = useState([]);
   const [currResume, setCurrResume] = useState(blankResume);
   const [jobApps, setJobApps] = useState([]);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const getResumes = async (getToken) => {
     try {
@@ -62,11 +63,12 @@ export function AppProvider({ children }) {
     }
   };
 
-  const createResume = async (getToken) => {
+  // const createResume = async (getToken, seed = false) => {
+  const createResume = async (getToken, resumeOverride = null) => {
     const token = await getToken();
-    console.log(seedResume);
 
-    setCurrResume(seedResume);
+    const resumeToSave = resumeOverride || currResume;
+    console.log('curr resume actually being used', resumeToSave);
 
     try {
       const response = await fetch('/api/users/resumes', {
@@ -76,7 +78,7 @@ export function AppProvider({ children }) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          currResume,
+          currResume: resumeToSave,
         }),
       });
 
@@ -115,6 +117,8 @@ export function AppProvider({ children }) {
         jobApps,
         setJobApps,
         createResume,
+        analysisResult,
+        setAnalysisResult,
       }}
     >
       {children}

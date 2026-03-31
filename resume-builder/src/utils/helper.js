@@ -13,6 +13,7 @@ export const mapResumeToState = (resume) => {
     edu_honors: resume.eduHonors,
     edu_location: resume.eduLocation,
     jobLink: resume.jobLink,
+    targetCompany: resume.targetCompany,
 
     experience: resume.experiences.map((exp) => ({
       role: exp.role,
@@ -44,6 +45,7 @@ export const blankResume = {
   resumeId: null,
   title: 'Untitled Resume',
   name: '',
+  targetCompany: '',
   header: '',
   email: '',
   contact: '',
@@ -72,6 +74,7 @@ export const blankResume = {
 export const seedResume = {
   name: 'Danny Niedzwiedzki',
   jobLink: 'http://daniel.com',
+  targetCompany: 'PRIMARY',
   resumeId: '',
   title: 'Primary',
   header:

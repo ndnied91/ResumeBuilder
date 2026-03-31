@@ -27,6 +27,7 @@ Instructions:
 Return JSON in this exact format:
 {
   "summary": "string",
+  "targetCompany": "string",
   "experience": [
     {
       "role": "string",

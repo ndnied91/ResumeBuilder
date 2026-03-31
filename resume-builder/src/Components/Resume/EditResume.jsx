@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../../context/useAppContext';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { FaTrashCan } from 'react-icons/fa6';
@@ -210,7 +210,6 @@ export const EditResume = () => {
     );
 
     const data = await res.json();
-    console.log(res);
     isSetSaving(false);
 
     if (res.status === 200) {
@@ -230,46 +229,6 @@ export const EditResume = () => {
     isSetSaving(false);
     return data;
   };
-
-  // const createResume = async () => {
-  //   if (!isSignedIn || !user) return;
-
-  //   isSetSaving(true);
-
-  //   const token = await getToken(); // from Clerk
-
-  //   try {
-  //     const res = await fetch('/api/users/resumes', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({
-  //         clerkId: user.id, //shouldn't need this
-  //         currResume,
-  //       }),
-  //     });
-
-  //     const data = await res.json();
-  //     isSetSaving(false);
-
-  //     if (res.status === 201) {
-  //       toast.success('Resume saved successfully!', {
-  //         duration: 2000,
-  //       });
-  //     } else {
-  //       toast.error(data?.message || 'Failed to save resume');
-  //     }
-
-  //     // add new resume to all resumes
-  //     setAllResumes((prev) => [...prev, data]);
-
-  //     console.log('Resume saved successfully');
-  //   } catch (error) {
-  //     console.error('Failed to save resume:', error);
-  //   }
-  // };
 
   return (
     <div className="min-h-0 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -400,9 +359,9 @@ export const EditResume = () => {
         )}
 
         <Input
-          label="Title"
-          name="title"
-          value={currResume.title}
+          label="Name/Company"
+          name="targetCompany"
+          value={currResume?.targetCompany || ''}
           updateField={updateField}
         />
 

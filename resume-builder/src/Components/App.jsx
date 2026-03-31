@@ -8,6 +8,7 @@ import { Dashboard } from './Dashboard';
 import { HomePage } from './HomePage';
 import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';
+import { FullATS } from './ATS/FullATS';
 
 function App() {
   const { userPane, getResumes, setUserIds, userIds, getJobApps } =
@@ -57,6 +58,7 @@ function App() {
     resume: <Resume />,
     settings: <Settings />,
     dashboard: <Dashboard />,
+    ats: <FullATS />,
   };
 
   return (

@@ -13,7 +13,7 @@ export const saveGeneratedResume = async (
   const resume = await prisma.resume.create({
     data: {
       jobLink,
-      // title: parsedAIResume.notes.title,
+      targetCompany: parsedAIResume.targetCompany || '',
       name: currResume.name, //stays the same
       header: currResume.header, //stays the same
       email: currResume.email, //stays the same

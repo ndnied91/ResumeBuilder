@@ -57,7 +57,6 @@ export const GenerateResume = () => {
         return;
       }
 
-      // console.log('AI response:', data);
       setCurrResume(mapResumeToState(data));
       setAllResumes((prev) => [...prev, data]);
 
@@ -127,7 +126,7 @@ export const GenerateResume = () => {
                 {Array.isArray(allResumes) &&
                   allResumes.map((resume) => (
                     <option key={resume.id} value={resume.id}>
-                      {resume.title || 'Untitled Resume'}
+                      {resume.targetCompany || 'Untitled Resume'}
                     </option>
                   ))}
               </select>

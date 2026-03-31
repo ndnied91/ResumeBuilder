@@ -23,6 +23,7 @@ model User {
 model Resume {
   id          String   @id @default(cuid())
   title       String   @default("Untitled Resume")
+  targetCompany     String
   name        String
   header      String?
   email       String?

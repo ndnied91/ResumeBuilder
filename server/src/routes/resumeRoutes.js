@@ -31,6 +31,7 @@ router.post('/resumes', requireAuth(), async (req, res) => {
     const resume = await prisma.resume.create({
       data: {
         name: currResume.name,
+        targetCompany: currResume.targetCompany,
         header: currResume.header,
         title: currResume.title,
         email: currResume.email,
@@ -90,7 +91,7 @@ router.post('/resumes', requireAuth(), async (req, res) => {
     const savedApplication = await saveJobApplication({
       userId: dbUser.id,
       resumeId: resume.id,
-      company: 'Test Company',
+      company: resume.targetCompany,
       jobTitle: 'Software Engineer',
       jobLink: currResume.jobLink,
     });
@@ -177,6 +178,7 @@ router.patch('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
       data: {
         name: req.body.name,
         header: req.body.header,
+        targetCompany: req.body.targetCompany,
         title: req.body.title,
         email: req.body.email,
         contact: req.body.contact,

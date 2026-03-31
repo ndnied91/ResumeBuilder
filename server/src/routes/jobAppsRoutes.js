@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { requireAuth, getAuth } from '@clerk/express';
 import { prisma } from '../../lib/prisma.js';
+import { saveJobApplication } from '../../services/jobApplicationService.js';
 
 import {
   getDbUserFromAuth,
@@ -10,6 +11,43 @@ import {
 } from './../utils/authHelper.js';
 
 const router = express.Router();
+
+router.post('/job-applications', requireAuth(), async (req, res) => {
+  try {
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    console.log('hit add job app route');
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { company, jobTitle, status, jobLink, resumeId } = req.body;
+
+    if (!company || !jobTitle) {
+      return res.status(400).json({
+        message: 'Company and job title are required',
+      });
+    }
+
+    const savedApplication = await saveJobApplication({
+      userId: dbUser.id,
+      resumeId: resumeId || null,
+      company,
+      jobTitle,
+      jobLink: jobLink || null,
+      status: status || 'Applied',
+    });
+
+    return res.status(201).json(savedApplication);
+  } catch (e) {
+    console.error('Error saving job application:', e);
+
+    return res.status(500).json({
+      message: 'Unable to save',
+    });
+  }
+});
 
 router.get(
   '/users/:userId/job-applications',
@@ -56,6 +94,21 @@ router.get(
   },
 );
 
+router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.jobApplication.delete({
+      where: { id },
+    });
+
+    return res.status(200).json({ message: 'Deleted successfully' });
+  } catch (error) {
+    console.error('Delete error:', error);
+    return res.status(500).json({ message: 'Failed to delete' });
+  }
+});
+
 //used for updating the job status on job apps
 router.patch('/job-applications/:id', requireAuth(), async (req, res) => {
   try {
@@ -71,21 +124,6 @@ router.patch('/job-applications/:id', requireAuth(), async (req, res) => {
   } catch (error) {
     console.error('Error updating status:', error);
     return res.status(500).json({ message: 'Failed to update status' });
-  }
-});
-
-router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await prisma.jobApplication.delete({
-      where: { id },
-    });
-
-    return res.status(200).json({ message: 'Deleted successfully' });
-  } catch (error) {
-    console.error('Delete error:', error);
-    return res.status(500).json({ message: 'Failed to delete' });
   }
 });
 

@@ -11,11 +11,27 @@ const SideMenu = () => {
   const { setUserPane } = useAppContext();
 
   const handleSignOut = async () => {
-    // Perform any pre-sign-out actions here
-    // Call the signOut function
     await signOut({ redirectUrl: '/' }); // Redirect to the home page after sign out
+  };
 
-    // Perform any post-sign-out actions here
+  const routes = [
+    { key: 'dashboard', label: 'Dashboard' },
+    { key: 'resume', label: 'Resume' },
+    { key: 'generate', label: 'Generate Resume' },
+    { key: 'ats', label: 'ATS Checker' },
+    { key: 'settings', label: 'Settings' },
+  ];
+
+  const renderRoutes = () => {
+    return routes.map((route) => (
+      <button
+        key={route.key}
+        onClick={() => setUserPane(route.key)}
+        className="mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+      >
+        {route.label}
+      </button>
+    ));
   };
 
   return (
@@ -46,35 +62,7 @@ const SideMenu = () => {
       {isOpen && (
         <div className="flex h-full flex-col justify-between">
           {/* Navigation */}
-          <nav className="px-3 py-2">
-            <button
-              onClick={() => setUserPane('dashboard')}
-              className="mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-            >
-              Dashboard
-            </button>
-
-            <button
-              onClick={() => setUserPane('generate')}
-              className="mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-            >
-              Generate Resume
-            </button>
-
-            <button
-              onClick={() => setUserPane('resume')}
-              className="mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-            >
-              Resume
-            </button>
-
-            <button
-              onClick={() => setUserPane('settings')}
-              className="w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
-            >
-              Settings
-            </button>
-          </nav>
+          <nav className="px-3 py-2">{renderRoutes()}</nav>
 
           {/* Bottom Section */}
           <div className="border-t border-gray-200 bg-gray-50 p-3">

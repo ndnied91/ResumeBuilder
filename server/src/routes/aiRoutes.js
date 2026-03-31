@@ -51,7 +51,7 @@ router.post('/', requireAuth(), async (req, res) => {
     await saveJobApplication({
       userId: dbUser.id,
       resumeId: savedResume.id,
-      company: 'AI Test Company',
+      company: savedResume.targetCompany,
       jobTitle: 'Software Engineer',
       jobLink: currResume.jobLink,
     });

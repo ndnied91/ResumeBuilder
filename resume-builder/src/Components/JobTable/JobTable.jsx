@@ -1,12 +1,14 @@
-import { useAppContext } from '../context/useAppContext';
+import { useAppContext } from '../../context/useAppContext';
 import { useAuth } from '@clerk/clerk-react';
-import { formatResumeForClient } from '../utils/helper';
+import { formatResumeForClient } from '../../utils/helper';
 import { FaTrashCan } from 'react-icons/fa6';
 import { LuPencil } from 'react-icons/lu';
 import { FaRegSave } from 'react-icons/fa';
 import { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import toast from 'react-hot-toast';
+import { IoMdAdd } from 'react-icons/io';
+import { AddJobModal } from './AddJobModal';
 
 export const JobTable = () => {
   const {
@@ -19,7 +21,10 @@ export const JobTable = () => {
   } = useAppContext();
 
   const { getToken } = useAuth();
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+
   const [selectedJobId, setSelectedJobId] = useState('');
   const [filter, setFilter] = useState('All');
 
@@ -170,12 +175,8 @@ export const JobTable = () => {
     }
   };
 
-  const editJob = (job) => {
-    console.log('current job', job);
-  };
-
   return (
-    <section className="mt-6">
+    <section className="mt-4">
       {showDeleteModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
@@ -222,9 +223,24 @@ export const JobTable = () => {
         </div>
       ) : null}
 
+      {/* add new job modal  */}
+      {showAddModal && <AddJobModal setShowAddModal={setShowAddModal} />}
+
       <div className="flex items-end justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Job Applications</h2>
+          <div className="flex gap-2 items-center">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Job Applications
+            </h2>
+
+            <button
+              className="flex items-center justify-center cursor-pointer h-8 w-8 rounded-full hover:bg-gray-100"
+              onClick={() => setShowAddModal(true)}
+            >
+              <IoMdAdd size={20} />
+            </button>
+          </div>
+
           <p className="mt-1 text-sm text-gray-500">
             Track where you applied and which resume was used
           </p>

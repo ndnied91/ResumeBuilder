@@ -60,7 +60,7 @@ export const Resume = () => {
 
               {allResumes?.map((resume) => (
                 <option key={resume.id} value={resume.id}>
-                  {resume.title || 'Untitled Resume'}
+                  {resume.targetCompany || 'Untitled Resume'}
                 </option>
               ))}
             </select>
