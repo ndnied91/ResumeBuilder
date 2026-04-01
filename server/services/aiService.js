@@ -217,3 +217,92 @@ Rules:
   const parsed = JSON.parse(response.output_text);
   return parsed;
 };
+
+export const improveResumeWithAI = async ({ analysisResult, jobLink }) => {
+  const prompt = `
+You are a resume optimization assistant.
+
+You will receive:
+1. The user's current resume
+2. A job URL
+3. ATS analysis feedback for that resume
+
+Your job is to improve the resume using the ATS feedback while staying completely truthful.
+
+Current resume:
+${JSON.stringify(analysisResult.resume, null, 2)}
+
+Job URL:
+${jobLink || 'No job URL provided'}
+
+ATS analysis feedback:
+${JSON.stringify(
+  {
+    score: analysisResult.result.score,
+    summary: analysisResult.result.summary,
+    strengths: analysisResult.result.strengths,
+    gaps: analysisResult.result.gaps,
+    recommendations: analysisResult.result.recommendations,
+  },
+  null,
+  2,
+)}
+
+Instructions:
+- Keep all information truthful
+- Do not invent experience, companies, dates, projects, technologies, metrics, or responsibilities
+- Improve wording, clarity, and impact
+- Use the ATS feedback to strengthen the resume
+- Address gaps where possible by rewriting existing truthful content more clearly
+- Naturally incorporate relevant missing keywords only if supported by the original resume
+- Preserve the resume's overall structure
+- Remove weak, repetitive, or duplicate bullets
+- Keep the result concise and ATS-friendly
+- Return valid JSON only
+- Do not include markdown
+- Do not include commentary
+- Do not wrap the response in backticks
+
+Return JSON in this exact format:
+{
+  "summary": "string",
+  "targetCompany": "string",
+  "experience": [
+    {
+      "role": "string",
+      "company": "string",
+      "date": "string",
+      "bullets": ["string"]
+    }
+  ],
+  "skillGroups": [
+    {
+      "category": "string",
+      "items": ["string"]
+    }
+  ],
+  "notes": ["string"]
+}
+
+Rules:
+- "summary" must always be a string
+- "targetCompany" must always be a string
+- "targetCompany" must have "-ATS" at the end of the string
+- "experience" must always be an array
+- "skillGroups" must always be an array
+- Each skill group must include a non-empty "category"
+- Each skill group must include an "items" array of strings
+- Do not use "skills" as a top-level field
+- Do not rename any fields
+- If there are no skill groups, return an empty array
+- If there are no notes, return an empty array
+- "notes" should briefly explain what was improved based on the ATS feedback
+`;
+
+  const response = await openai.responses.create({
+    model: 'gpt-5',
+    input: prompt,
+  });
+
+  return response.output_text;
+};

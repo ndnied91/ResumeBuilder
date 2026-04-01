@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/useAppContext';
 import { getScoreStyles } from './helper';
+import { mapResumeToState } from '../../utils/helper';
 
 export const FullATS = () => {
   const {
@@ -13,9 +14,12 @@ export const FullATS = () => {
     setJobLink_ATS,
     handleAnalyze,
     isAnalyzing,
+    setUserPane,
+    setCurrResume,
+    setAllResumes,
   } = useAppContext();
 
-  const [openPane, setOpenPane] = useState('');
+  const [isImproving, setIsImproving] = useState(false);
 
   const { getToken } = useAuth();
 
@@ -50,9 +54,39 @@ export const FullATS = () => {
   const progress = circumference - (score / 100) * circumference;
 
   const handleSubmit = async () => {
-    //POST ROUTE
-    //create new resume based on generated resume with these suggestions
-    console.log(analysisResult);
+    try {
+      setIsImproving(true);
+
+      const token = await getToken();
+
+      const res = await fetch('/api/ai/ats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          analysisResult,
+          jobLink: jobLink_ATS,
+        }),
+      });
+
+      const data = await res.json();
+      console.log('new resume');
+      console.log(data);
+
+      // Option 1: preview
+      setCurrResume(mapResumeToState(data));
+
+      setUserPane('resume');
+      setAllResumes((prev) => [...prev, data]);
+      // Option 2: save immediately
+      // await createResume(getToken, data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsImproving(false);
+    }
   };
 
   return (
@@ -170,10 +204,17 @@ export const FullATS = () => {
             </div>
 
             <button
-              className="w-full cursor-pointer rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 mt-4"
+              disabled={isImproving}
               onClick={handleSubmit}
+              className={`w-full rounded-xl px-4 py-3 text-sm font-medium text-white mt-4 transition
+    ${
+      isImproving
+        ? 'bg-gray-400 cursor-not-allowed'
+        : 'bg-gray-900 hover:bg-gray-800 cursor-pointer'
+    }
+  `}
             >
-              Regenerate with suggestions
+              {isImproving ? 'Generating...' : 'Regenerate with suggestions'}
             </button>
           </div>
 

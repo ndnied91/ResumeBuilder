@@ -2,7 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import { clerkMiddleware, requireAuth, getAuth } from '@clerk/express';
 import { prisma } from '../../lib/prisma.js';
-import { generateResumeWithAI } from '../../services/aiService.js';
+import {
+  generateResumeWithAI,
+  improveResumeWithAI,
+} from '../../services/aiService.js';
 import { saveJobApplication } from '../../services/jobApplicationService.js';
 
 import {
@@ -55,6 +58,30 @@ router.post('/', requireAuth(), async (req, res) => {
       jobTitle: 'Software Engineer',
       jobLink: currResume.jobLink,
     });
+
+    return res.status(201).json(savedResume);
+  } catch (error) {
+    console.error('AI route error:', error);
+    return res.status(500).json({
+      message: 'Server error',
+    });
+  }
+});
+
+router.post('/ats', requireAuth(), async (req, res) => {
+  try {
+    const { analysisResult, jobLink } = req.body;
+
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    const aiResume = await improveResumeWithAI({ analysisResult, jobLink });
+
+    const savedResume = await saveGeneratedResume(
+      aiResume,
+      analysisResult.resume,
+      dbUser.id,
+      jobLink,
+    );
 
     return res.status(201).json(savedResume);
   } catch (error) {
