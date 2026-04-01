@@ -15,17 +15,6 @@ export const Dashboard = () => {
   } = useAppContext();
   const { getToken } = useAuth();
 
-  // const [selectedResumeId, setSelectedResumeId] = useState('');
-  // const [jobLink, setJobLink] = useState('');
-  // const [isAnalyzing, setIsAnalyzing] = useState(false);
-  // const [analysisResult, setAnalysisResult] = useState(null);
-
-  // const selectedResume = useMemo(() => {
-  //   return allResumes.find(
-  //     (resume) => (resume.resumeId || resume.id) === selectedResumeId,
-  //   );
-  // }, [allResumes, selectedResumeId]);
-
   const handleSeedResume = async () => {
     setCurrResume(seedResume);
     await createResume(getToken, seedResume);

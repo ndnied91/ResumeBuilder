@@ -5,12 +5,18 @@ import { mapResumeToState, blankResume, seedResume } from '../utils/helper';
 export function AppProvider({ children }) {
   const [resumeFile, setResumeFile] = useState(null);
   const [jobLink, setJobLink] = useState('');
-  const [userPane, setUserPane] = useState('dashboard');
+  const [userPane, setUserPane] = useState('ats');
   const [userIds, setUserIds] = useState();
   const [allResumes, setAllResumes] = useState([]);
   const [currResume, setCurrResume] = useState(blankResume);
   const [jobApps, setJobApps] = useState([]);
-  const [analysisResult, setAnalysisResult] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState({});
+  const [selectedResumeId_ATS, setSelectedResumeId_ATS] = useState(''); //only for ATS
+  const [jobLink_ATS, setJobLink_ATS] = useState(
+    'https://job-boards.greenhouse.io/justworks/jobs/7733611?gh_jid=7733611&gh_src=f08327d91us&source=LinkedIn',
+  );
+
+  const [isAnalyzing, setIsAnalyzing] = useState(false); //for ats route
 
   const getResumes = async (getToken) => {
     try {
@@ -97,6 +103,40 @@ export function AppProvider({ children }) {
     }
   };
 
+  const handleAnalyze = async (getToken) => {
+    if (!selectedResumeId_ATS || !jobLink_ATS.trim()) return;
+
+    try {
+      setIsAnalyzing(true);
+
+      const token = await getToken();
+      const res = await fetch('/api/ats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          selectedResumeId_ATS,
+          jobLink_ATS,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('ATS analysis failed:', data.message);
+        return;
+      }
+
+      setAnalysisResult(data);
+    } catch (error) {
+      console.error('Error analyzing resume:', error);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -119,6 +159,13 @@ export function AppProvider({ children }) {
         createResume,
         analysisResult,
         setAnalysisResult,
+        selectedResumeId_ATS,
+        setSelectedResumeId_ATS,
+        jobLink_ATS,
+        setJobLink_ATS,
+        handleAnalyze,
+        isAnalyzing,
+        setIsAnalyzing,
       }}
     >
       {children}

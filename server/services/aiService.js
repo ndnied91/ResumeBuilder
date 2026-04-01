@@ -160,3 +160,60 @@ Rules:
   console.log(response.output_text);
   return response.output_text;
 };
+
+export const analyzeResume = async ({ resume, jobLink_ATS }) => {
+  console.log('selected resume is', resume);
+  console.log('job link is', jobLink_ATS);
+
+  const prompt = `
+You are an ATS resume analysis assistant.
+
+You will receive a current resume and a job URL.
+Your job is to analyze how well the resume matches the job posting and return a concise ATS-style evaluation.
+
+Current resume:
+${JSON.stringify(resume, null, 2)}
+
+Job URL:
+${jobLink_ATS || 'No job URL provided'}
+
+Instructions:
+- Evaluate the resume against the likely requirements of the job posting
+- Keep the analysis grounded in the provided resume and the job URL
+- Do not invent qualifications or experience that are not present
+- Focus on relevance, keyword alignment, clarity, and likely ATS match quality
+- Return valid JSON only
+- Do not include markdown
+- Do not include commentary
+- Do not wrap the response in backticks
+
+Return JSON in this exact format:
+{
+  "score": 0,
+  "summary": "string",
+  "strengths": ["string"],
+  "gaps": ["string"],
+  "recommendations": ["string"]
+}
+
+Rules:
+- "score" must always be a number from 0 to 100
+- "summary" must always be a string
+- "strengths" must always be an array of strings
+- "gaps" must always be an array of strings
+- "recommendations" must always be an array of strings
+- Recommendations should be specific and actionable
+- Do not return any fields other than: score, summary, strengths, gaps, recommendations
+- If there are no strengths, return an empty array
+- If there are no gaps, return an empty array
+- If there are no recommendations, return an empty array
+`;
+
+  const response = await openai.responses.create({
+    model: 'gpt-5',
+    input: prompt,
+  });
+
+  const parsed = JSON.parse(response.output_text);
+  return parsed;
+};

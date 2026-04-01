@@ -1,15 +1,260 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/useAppContext';
+import { getScoreStyles } from './helper';
 
 export const FullATS = () => {
   const {
     allResumes = [],
-    setUserPane,
     analysisResult,
-    setAnalysisResult,
+    selectedResumeId_ATS,
+    setSelectedResumeId_ATS,
+    jobLink_ATS,
+    setJobLink_ATS,
+    handleAnalyze,
+    isAnalyzing,
   } = useAppContext();
 
-  console.log('score', analysisResult);
+  const [openPane, setOpenPane] = useState('');
 
-  return <div>FullATS</div>;
+  const { getToken } = useAuth();
+
+  const normalizedResult = useMemo(() => {
+    if (!analysisResult) return null;
+
+    try {
+      if (typeof analysisResult === 'string') {
+        return JSON.parse(analysisResult);
+      }
+
+      if (analysisResult.result && typeof analysisResult.result === 'string') {
+        return JSON.parse(analysisResult.result);
+      }
+
+      if (analysisResult.result && typeof analysisResult.result === 'object') {
+        return analysisResult.result;
+      }
+
+      return analysisResult;
+    } catch (error) {
+      console.error('Failed to normalize ATS result:', error);
+      return null;
+    }
+  }, [analysisResult]);
+
+  const score = Number(normalizedResult?.score ?? 0);
+  const scoreStyles = getScoreStyles(score);
+
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const progress = circumference - (score / 100) * circumference;
+
+  const handleSubmit = async () => {
+    //POST ROUTE
+    //create new resume based on generated resume with these suggestions
+    console.log(analysisResult);
+  };
+
+  return (
+    <section className="space-y-6 ">
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-5">
+          <h2 className="text-2xl font-bold text-gray-900">ATS Checker</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Analyze how well your saved resume matches a job posting and get
+            clear suggestions to improve it.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_1fr_auto] ">
+          <select
+            value={selectedResumeId_ATS}
+            onChange={(e) => setSelectedResumeId_ATS(e.target.value)}
+            className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+          >
+            <option value="">Select Resume</option>
+            {allResumes.map((resume) => (
+              <option
+                key={resume.resumeId || resume.id}
+                value={resume.resumeId || resume.id}
+              >
+                {resume.targetCompany || resume.name || 'Untitled Resume'}
+              </option>
+            ))}
+          </select>
+
+          <input
+            type="text"
+            value={jobLink_ATS}
+            onChange={(e) => setJobLink_ATS(e.target.value)}
+            placeholder="Paste job link here"
+            className="rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+          />
+
+          <button
+            onClick={() => handleAnalyze(getToken)}
+            disabled={
+              isAnalyzing || !selectedResumeId_ATS || !jobLink_ATS.trim()
+            }
+            className={`flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white transition ${
+              isAnalyzing || !selectedResumeId_ATS || !jobLink_ATS.trim()
+                ? 'cursor-not-allowed bg-gray-400'
+                : 'cursor-pointer bg-gray-900 hover:bg-gray-800'
+            }`}
+          >
+            {isAnalyzing && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            )}
+            {isAnalyzing ? 'Analyzing...' : 'Run ATS Check'}
+          </button>
+        </div>
+      </div>
+
+      {!normalizedResult ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-gray-500">
+            Run an ATS check to see your score and recommendations.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm h-max">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Overall Score
+            </h3>
+
+            <div className="mt-6 flex flex-col items-center">
+              <div className="relative flex h-36 w-36 items-center justify-center">
+                <svg className="h-36 w-36 -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    strokeWidth="8"
+                    fill="none"
+                    className="stroke-gray-200"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={progress}
+                    className={scoreStyles.ring}
+                  />
+                </svg>
+
+                <div className="absolute flex flex-col items-center">
+                  <span className="text-3xl font-bold text-gray-900">
+                    {score}
+                  </span>
+                  <span className="text-xs text-gray-500">out of 100</span>
+                </div>
+              </div>
+
+              <span
+                className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-medium ${scoreStyles.badge}`}
+              >
+                {scoreStyles.text}
+              </span>
+            </div>
+
+            <div className="mt-2 rounded-xl bg-gray-50 p-4">
+              <p className="text-sm font-medium text-gray-900">Summary</p>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                {normalizedResult.summary || 'No summary returned.'}
+              </p>
+            </div>
+
+            <button
+              className="w-full cursor-pointer rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 mt-4"
+              onClick={handleSubmit}
+            >
+              Regenerate with suggestions
+            </button>
+          </div>
+
+          <div className="max-h-[75vh] overflow-hidden overflow-y-auto">
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Strengths
+                </h3>
+
+                {/* setOpenPane */}
+                <div className="">
+                  {normalizedResult.strengths?.length ? (
+                    <ul className="mt-4 space-y-3">
+                      {normalizedResult.strengths.map((item, index) => (
+                        <li
+                          key={index}
+                          className="rounded-xl bg-green-50 px-4 py-3 text-sm text-gray-700"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-4 text-sm text-gray-500">
+                      No strengths were returned.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900">Gaps</h3>
+
+                {normalizedResult.gaps?.length ? (
+                  <ul className="mt-4 space-y-3">
+                    {normalizedResult.gaps.map((item, index) => (
+                      <li
+                        key={index}
+                        className="rounded-xl bg-red-50 px-4 py-3 text-sm text-gray-700"
+                      >
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">
+                    No gaps were returned.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Recommendations
+                </h3>
+
+                {normalizedResult.recommendations?.length ? (
+                  <ol className="mt-4 space-y-3">
+                    {normalizedResult.recommendations.map((item, index) => (
+                      <li
+                        key={index}
+                        className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-gray-700"
+                      >
+                        <span className="mr-2 font-semibold text-gray-900">
+                          {index + 1}.
+                        </span>
+                        {item}
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">
+                    No recommendations were returned.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 };

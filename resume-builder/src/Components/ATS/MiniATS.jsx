@@ -1,56 +1,30 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAppContext } from '../../context/useAppContext';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import toast from 'react-hot-toast';
+import { getScoreStyles } from './helper';
 
 export const MiniATS = () => {
+  const { getToken, isSignedIn } = useAuth();
+  const { user } = useUser();
   const {
     allResumes = [],
     setUserPane,
     analysisResult,
     setAnalysisResult,
+    selectedResumeId_ATS,
+    setSelectedResumeId_ATS,
+    jobLink_ATS,
+    setJobLink_ATS,
+    handleAnalyze,
+    isAnalyzing,
   } = useAppContext();
 
-  const [jobLink, setJobLink] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [selectedResumeId, setSelectedResumeId] = useState('');
-
-  const getScoreStyles = (score) => {
-    if (score >= 80) {
-      return {
-        badge: 'bg-green-100 text-green-700',
-        text: 'Strong match',
-      };
-    }
-
-    if (score >= 60) {
-      return {
-        badge: 'bg-yellow-100 text-yellow-700',
-        text: 'Decent match',
-      };
-    }
-
-    return {
-      badge: 'bg-red-100 text-red-700',
-      text: 'Needs improvement',
-    };
-  };
-
   const scoreStyles = analysisResult
-    ? getScoreStyles(analysisResult.score)
+    ? getScoreStyles(analysisResult?.result?.score)
     : null;
 
-  const handleAnalyze = async () => {
-    if (!selectedResumeId || !jobLink.trim()) return;
-
-    setIsAnalyzing(true);
-
-    setTimeout(() => {
-      setAnalysisResult({
-        score: 78,
-      });
-
-      setIsAnalyzing(false);
-    }, 1000);
-  };
+  console.log(analysisResult.result);
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -66,7 +40,7 @@ export const MiniATS = () => {
 
         <div className="flex gap-2">
           <button
-            onClick={() => setAnalysisResult(null)}
+            onClick={() => setAnalysisResult({})}
             className="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
           >
             Check resume
@@ -81,11 +55,11 @@ export const MiniATS = () => {
         </div>
       </div>
 
-      {!analysisResult && (
+      {!analysisResult.result && (
         <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[180px_1fr_auto]">
           <select
-            value={selectedResumeId}
-            onChange={(e) => setSelectedResumeId(e.target.value)}
+            value={selectedResumeId_ATS}
+            onChange={(e) => setSelectedResumeId_ATS(e.target.value)}
             className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
           >
             <option value="">Select Resume</option>
@@ -101,17 +75,19 @@ export const MiniATS = () => {
 
           <input
             type="text"
-            value={jobLink}
-            onChange={(e) => setJobLink(e.target.value)}
+            value={jobLink_ATS}
+            onChange={(e) => setJobLink_ATS(e.target.value)}
             placeholder="Paste job link here"
             className="rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-700 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
           />
 
           <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing || !selectedResumeId || !jobLink.trim()}
-            className={`rounded-xl px-4 py-2 text-sm font-medium text-white transition ${
-              isAnalyzing || !selectedResumeId || !jobLink.trim()
+            onClick={() => handleAnalyze(getToken)}
+            disabled={
+              isAnalyzing || !selectedResumeId_ATS || !jobLink_ATS.trim()
+            }
+            className={`rounded-xl px-4 py-2 text-sm font-medium text-white transition cursor-pointer ${
+              isAnalyzing || !selectedResumeId_ATS || !jobLink_ATS.trim()
                 ? 'cursor-not-allowed bg-gray-400'
                 : 'bg-gray-900 hover:bg-gray-800'
             }`}
@@ -121,11 +97,11 @@ export const MiniATS = () => {
         </div>
       )}
 
-      {analysisResult && scoreStyles && (
+      {analysisResult.result && scoreStyles && (
         <div className="mt-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-base font-semibold text-gray-900 shadow-sm">
-              {analysisResult.score}
+              {analysisResult?.result?.score}
             </div>
 
             <div>
