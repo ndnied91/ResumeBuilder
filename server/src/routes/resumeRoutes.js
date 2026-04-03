@@ -3,14 +3,22 @@ import cors from 'cors';
 import { clerkMiddleware, requireAuth, getAuth } from '@clerk/express';
 import { prisma } from '../../lib/prisma.js';
 
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const { PDFParse } = require('pdf-parse');
+
+import multer from 'multer';
 import {
   getDbUserFromAuth,
   validateUserAccess,
   validateResumeOwnership,
 } from './../utils/authHelper.js';
 import { saveJobApplication } from '../../services/jobApplicationService.js';
+import { parsePDFResumeWithAI } from '../../services/aiService.js';
 
 const router = express.Router();
+const upload = multer();
 
 //creates a resume
 router.post('/resumes', requireAuth(), async (req, res) => {
@@ -95,8 +103,6 @@ router.post('/resumes', requireAuth(), async (req, res) => {
       jobLink: currResume.jobLink,
     });
 
-    console.log('saved application ', savedApplication);
-
     return res.status(201).json(resume);
   } catch (error) {
     console.error('Error saving resume:', error);
@@ -140,6 +146,8 @@ router.get('/resumes', requireAuth(), async (req, res) => {
       ...resume,
       resumeId: resume.id,
     }));
+
+    console.log(formattedResumes);
 
     return res.status(200).json(formattedResumes);
   } catch (error) {
@@ -277,5 +285,117 @@ router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
     return res.status(500).json({ message: 'Failed to delete resume' });
   }
 });
+
+//RESUME UPDATE PATH
+router.post(
+  '/resumes/upload',
+  requireAuth(),
+  upload.single('resumeFile'),
+  async (req, res) => {
+    try {
+      const { userId: authUserId } = getAuth(req);
+
+      const file = req.file;
+      const { jobLink, title } = req.body;
+
+      const dbUser = await getDbUserFromAuth(req, prisma);
+
+      if (!dbUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (!file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      if (file.mimetype !== 'application/pdf') {
+        return res.status(400).json({ message: 'Unsupported file type' });
+      }
+
+      const parser = new PDFParse({ data: file.buffer });
+      const result = await parser.getText();
+      await parser.destroy();
+
+      const resumeText = result.text;
+
+      console.log('Parsed text:', resumeText);
+
+      const aiResume = await parsePDFResumeWithAI({ resumeText });
+
+      console.log(aiResume);
+
+      const resume = await prisma.resume.create({
+        data: {
+          name: aiResume.name,
+          targetCompany: title, //from user
+          header: aiResume.header,
+          title: title,
+          email: aiResume.email,
+          contact: aiResume.contact,
+          portfolio: aiResume.portfolio,
+          summary: aiResume.summary,
+          education: aiResume.education,
+          eduDesc: aiResume.edu_desc,
+          eduHonors: aiResume.edu_honors,
+          eduLocation: aiResume.edu_location,
+          userId: dbUser.id,
+          jobLink,
+
+          experiences: {
+            create: (aiResume.experience || []).map((job, jobIndex) => ({
+              role: job.role,
+              company: job.company,
+              date: job.date,
+              order: jobIndex,
+              bullets: {
+                create: (job.bullets || []).map((bullet, bulletIndex) => ({
+                  text: bullet,
+                  order: bulletIndex,
+                })),
+              },
+            })),
+          },
+
+          skillGroups: {
+            create: (aiResume.skills || []).map((group, groupIndex) => ({
+              category: group.category,
+              order: groupIndex,
+              items: {
+                create: (group.items || []).map((item, itemIndex) => ({
+                  name: item,
+                  order: itemIndex,
+                })),
+              },
+            })),
+          },
+        },
+        include: {
+          experiences: {
+            include: {
+              bullets: true,
+            },
+            orderBy: { order: 'asc' },
+          },
+          skillGroups: {
+            include: {
+              items: true,
+            },
+            orderBy: { order: 'asc' },
+          },
+        },
+      });
+
+      const formattedResume = {
+        ...resume,
+        resumeId: resume.id,
+      };
+
+      return res.status(201).json(formattedResume);
+    } catch (error) {
+      console.error('Upload error:', error);
+      return res.status(500).json({ message: 'Upload failed' });
+    }
+  },
+);
 
 export default router;

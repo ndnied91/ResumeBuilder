@@ -306,3 +306,84 @@ Rules:
 
   return response.output_text;
 };
+
+export async function parsePDFResumeWithAI(parsedResume) {
+  try {
+    const prompt = `
+You are a resume formatting assistant.
+
+Your job is to take parsed resume content and convert it into a clean, structured JSON object for a resume builder application.
+
+Rules:
+1. Fix spelling mistakes, malformed words, and obvious parsing/OCR errors.
+2. Preserve the candidate's real experience and intent.
+3. Do not invent companies, job titles, dates, technologies, or achievements.
+4. If a field is missing, return an empty string, null, or empty array.
+5. Rewrite broken or fragmented bullet points into clear, professional resume bullet points while preserving the original meaning.
+6. Group skills into logical categories when possible.
+7. Return ONLY valid JSON.
+8. Do not include markdown, explanations, or code fences.
+9. The response must match the exact field names below.
+
+Return this exact JSON shape:
+{
+  "title": "",
+  "targetCompany": "",
+  "name": "",
+  "header": "",
+  "email": "",
+  "contact": "",
+  "portfolio": "",
+  "summary": "",
+  "jobLink": null,
+  "education": "",
+  "edu_desc": "",
+  "edu_honors": "",
+  "edu_location": "",
+  "experience": [
+    {
+      "role": "",
+      "company": "",
+      "date": "",
+      "bullets": [""]
+    }
+  ],
+  "skills": [
+    {
+      "category": "",
+      "items": [""]
+    }
+  ]
+}
+
+Additional formatting rules:
+- "header" should contain location and professional links when available.
+- "contact" should contain phone number and/or secondary contact information when available.
+- "portfolio" should contain the portfolio/personal website if present.
+- "education" should contain the school name.
+- "edu_desc" should contain degree/program details.
+- "edu_honors" should contain honors or awards.
+- "edu_location" should contain school location.
+- "experience" must be an array of jobs.
+- Each job's "bullets" must be an array of strings.
+- "skills" must be an array of skill groups.
+- Each skill group's "items" must be an array of strings.
+
+Here is the parsed resume content:
+${JSON.stringify(parsedResume, null, 2)}
+`;
+
+    const response = await openai.responses.create({
+      model: 'gpt-4.1',
+      input: prompt,
+    });
+
+    const content = response.output_text;
+    const parsed = JSON.parse(content);
+
+    return parsed;
+  } catch (error) {
+    console.error('AI formatting failed:', error);
+    throw error;
+  }
+}

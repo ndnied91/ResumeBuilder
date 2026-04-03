@@ -4,6 +4,7 @@ import { JobTable } from './JobTable/JobTable';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { seedResume } from '../utils/helper';
 import { MiniATS } from './ATS/MiniATS';
+import { UploadModal } from './UploadModal';
 
 export const Dashboard = () => {
   const { user } = useUser();
@@ -15,6 +16,8 @@ export const Dashboard = () => {
   } = useAppContext();
   const { getToken } = useAuth();
 
+  const [isUploadModal, setIsUploadModal] = useState(false);
+
   const handleSeedResume = async () => {
     setCurrResume(seedResume);
     await createResume(getToken, seedResume);
@@ -25,6 +28,12 @@ export const Dashboard = () => {
   ).length;
 
   const savedJobLinksCount = jobApps.filter((job) => !!job.jobLink).length;
+
+  const uploadResume = () => {
+    //user gets a modal to add new resume
+    // user can either drag or select a resume from files
+    //resume gets parsed and added to resume
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -88,7 +97,7 @@ export const Dashboard = () => {
               Quick Actions
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-3" onClick={() => setIsUploadModal(true)}>
               <button className="w-full cursor-pointer rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800">
                 Upload Resume
               </button>
@@ -102,6 +111,8 @@ export const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {isUploadModal && <UploadModal setIsUploadModal={setIsUploadModal} />}
 
         <JobTable />
       </div>
