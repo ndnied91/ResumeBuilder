@@ -111,9 +111,13 @@ router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
 
 //used for updating the job status on job apps
 router.patch('/job-applications/:id', requireAuth(), async (req, res) => {
+  console.log('hit update route');
+
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    console.log(req.body);
 
     const updatedJob = await prisma.jobApplication.update({
       where: { id },
