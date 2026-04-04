@@ -16,8 +16,6 @@ router.post('/job-applications', requireAuth(), async (req, res) => {
   try {
     const dbUser = await getDbUserFromAuth(req, prisma);
 
-    console.log('hit add job app route');
-
     if (!dbUser) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -56,8 +54,6 @@ router.get(
     try {
       const { userId } = req.params;
       const { userId: authUserId } = getAuth(req);
-
-      console.log('hit job app route');
 
       const dbUser = await getDbUserFromAuth(req, prisma);
 
@@ -98,6 +94,12 @@ router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;
 
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     await prisma.jobApplication.delete({
       where: { id },
     });
@@ -111,13 +113,15 @@ router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
 
 //used for updating the job status on job apps
 router.patch('/job-applications/:id', requireAuth(), async (req, res) => {
-  console.log('hit update route');
-
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    console.log(req.body);
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     const updatedJob = await prisma.jobApplication.update({
       where: { id },
@@ -135,6 +139,12 @@ router.patch('/job-applications/:id', requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     const updatedJob = await prisma.jobApplication.update({
       where: { id },

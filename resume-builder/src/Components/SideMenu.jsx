@@ -20,6 +20,7 @@ const SideMenu = () => {
     { key: 'generate', label: 'Generate Resume' },
     { key: 'ats', label: 'ATS Checker' },
     { key: 'settings', label: 'Settings' },
+    // { key: 'history', label: 'Historical' },
   ];
 
   const renderRoutes = () => {

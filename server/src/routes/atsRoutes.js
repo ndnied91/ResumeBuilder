@@ -66,10 +66,6 @@ router.post('/', requireAuth(), async (req, res) => {
       });
     }
 
-    console.log('Mini ATS request validated');
-    console.log('Resume ID:', selectedResumeId_ATS);
-    console.log('Job Link:', jobLink_ATS);
-
     const score = await analyzeResume({ resume, jobLink_ATS });
 
     // const score = {

@@ -10,6 +10,8 @@ import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';
 import { FullATS } from './ATS/FullATS';
 
+import { History } from './History';
+
 function App() {
   const { userPane, getResumes, setUserIds, userIds, getJobApps } =
     useAppContext();
@@ -59,6 +61,7 @@ function App() {
     settings: <Settings />,
     dashboard: <Dashboard />,
     ats: <FullATS />,
+    history: <History />,
   };
 
   return (

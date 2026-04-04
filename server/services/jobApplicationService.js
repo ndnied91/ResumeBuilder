@@ -9,7 +9,6 @@ export const saveJobApplication = async ({
   jobLink,
   status = 'Applied',
 }) => {
-  // console.log('resume ID is ', resumeId);
   const application = await prisma.jobApplication.create({
     data: {
       userId,

@@ -40,8 +40,6 @@ router.post('/', requireAuth(), async (req, res) => {
     const aiResume = await generateResumeWithAI({ currResume, jobLink });
     //call AI
 
-    console.log('ai resume before going into save generated', aiResume);
-
     const savedResume = await saveGeneratedResume(
       aiResume,
       currResume,
@@ -49,8 +47,6 @@ router.post('/', requireAuth(), async (req, res) => {
       jobLink,
     );
     //now save this into the database;
-    console.log(savedResume);
-
     await saveJobApplication({
       userId: dbUser.id,
       resumeId: savedResume.id,

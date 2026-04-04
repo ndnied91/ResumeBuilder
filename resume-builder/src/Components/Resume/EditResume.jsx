@@ -224,8 +224,6 @@ export const EditResume = () => {
       prev.map((resume) => (resume.id === data.id ? data : resume)),
     );
 
-    console.log('patch', data);
-
     isSetSaving(false);
     return data;
   };

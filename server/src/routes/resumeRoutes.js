@@ -147,8 +147,6 @@ router.get('/resumes', requireAuth(), async (req, res) => {
       resumeId: resume.id,
     }));
 
-    console.log(formattedResumes);
-
     return res.status(200).json(formattedResumes);
   } catch (error) {
     console.error('Error fetching resumes:', error);
@@ -253,7 +251,6 @@ router.patch('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
 router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
   try {
     const { resumeId, userId } = req.params;
-    console.log('hit delete route');
 
     const dbUser = await getDbUserFromAuth(req, prisma);
 
@@ -318,11 +315,7 @@ router.post(
 
       const resumeText = result.text;
 
-      console.log('Parsed text:', resumeText);
-
       const aiResume = await parsePDFResumeWithAI({ resumeText });
-
-      console.log(aiResume);
 
       const resume = await prisma.resume.create({
         data: {

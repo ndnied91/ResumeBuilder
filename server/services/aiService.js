@@ -157,14 +157,10 @@ Rules:
   //   ],
   // };
 
-  console.log(response.output_text);
   return response.output_text;
 };
 
 export const analyzeResume = async ({ resume, jobLink_ATS }) => {
-  console.log('selected resume is', resume);
-  console.log('job link is', jobLink_ATS);
-
   const prompt = `
 You are an ATS resume analysis assistant.
 

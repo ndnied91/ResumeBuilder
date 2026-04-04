@@ -9,7 +9,6 @@ import FocusTrap from 'focus-trap-react';
 import toast from 'react-hot-toast';
 import { IoMdAdd } from 'react-icons/io';
 import { AddJobModal } from './AddJobModal';
-import { FaRegNoteSticky } from 'react-icons/fa6';
 import { MdOutlineStickyNote2 } from 'react-icons/md';
 
 import { AddNoteModal } from './AddNoteModal';
@@ -28,7 +27,7 @@ export const JobTable = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState('Applied');
   const [editingJobId, setEditingJobId] = useState(null);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState('');
@@ -93,7 +92,6 @@ export const JobTable = () => {
     filter === 'All' ? jobApps : jobApps.filter((job) => job.status === filter);
 
   const openDeleteModal = (job) => {
-    console.log(job);
     setSelectedJob(job);
     setShowDeleteModal(true);
   };
@@ -294,7 +292,7 @@ export const JobTable = () => {
             </div>
           ) : (
             <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 z-10 border-b bg-gray-50">
+              <thead className=" sticky top-0 z-10 border-b bg-gray-100">
                 <tr>
                   <th className="px-4 py-3 font-medium text-gray-600">
                     Company
@@ -447,7 +445,7 @@ export const JobTable = () => {
                           title={job.notes ? 'Edit notes' : 'Add notes'}
                           className="group relative cursor-pointer text-gray-500 transition hover:text-gray-800"
                         >
-                          <MdOutlineStickyNote2 size={20} />
+                          <MdOutlineStickyNote2 size={24} />
                           {job.notes ? (
                             <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blue-500" />
                           ) : null}
