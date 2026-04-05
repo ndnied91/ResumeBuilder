@@ -12,6 +12,8 @@ import { FullATS } from './ATS/FullATS';
 
 import { History } from './History';
 
+import { ResumeParser } from './Resume/ResumeParser';
+
 function App() {
   const { userPane, getResumes, setUserIds, userIds, getJobApps } =
     useAppContext();
@@ -62,6 +64,7 @@ function App() {
     dashboard: <Dashboard />,
     ats: <FullATS />,
     history: <History />,
+    resumeParser: <ResumeParser />,
   };
 
   return (

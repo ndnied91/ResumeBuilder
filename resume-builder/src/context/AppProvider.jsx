@@ -5,7 +5,7 @@ import { mapResumeToState, blankResume, seedResume } from '../utils/helper';
 export function AppProvider({ children }) {
   const [resumeFile, setResumeFile] = useState(null);
   const [jobLink, setJobLink] = useState('');
-  const [userPane, setUserPane] = useState('dashboard');
+  const [userPane, setUserPane] = useState('resumeParser');
   const [userIds, setUserIds] = useState();
   const [allResumes, setAllResumes] = useState([]);
   const [currResume, setCurrResume] = useState(blankResume);

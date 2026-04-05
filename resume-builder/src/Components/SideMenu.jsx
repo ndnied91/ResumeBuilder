@@ -17,9 +17,11 @@ const SideMenu = () => {
   const routes = [
     { key: 'dashboard', label: 'Dashboard' },
     { key: 'resume', label: 'Resume' },
+    { key: 'resumeParser', label: 'Resume Parser' },
     { key: 'generate', label: 'Generate Resume' },
     { key: 'ats', label: 'ATS Checker' },
     { key: 'settings', label: 'Settings' },
+
     // { key: 'history', label: 'Historical' },
   ];
 

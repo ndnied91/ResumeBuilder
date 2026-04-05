@@ -155,21 +155,26 @@ router.get('/resumes', requireAuth(), async (req, res) => {
 });
 
 //PATCH ROUTE FOR RESUMES
-router.patch('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
+router.patch('/resumes/:resumeId', requireAuth(), async (req, res) => {
   try {
-    const { resumeId, userId } = req.params;
-    const dbUser = await getDbUserFromAuth(req, prisma);
+    const { resumeId } = req.params;
 
-    const userAccess = validateUserAccess(dbUser, userId);
-    if (!userAccess.ok) {
-      return res.status(userAccess.status).json({
-        message: userAccess.message,
+    const dbUser = await getDbUserFromAuth(req, prisma);
+    if (!dbUser) {
+      return res.status(404).json({
+        message: 'Authenticated user was not found in the database',
       });
     }
 
     const resumeById = await prisma.resume.findUnique({
       where: { id: resumeId },
     });
+
+    if (!resumeById) {
+      return res.status(404).json({
+        message: 'Resume not found',
+      });
+    }
 
     const ownership = validateResumeOwnership(resumeById, dbUser.id);
     if (!ownership.ok) {
@@ -247,31 +252,34 @@ router.patch('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
   }
 });
 
-//DELETE ROUTE
-router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
+//DELETE ROUTE UPDATED
+router.delete('/resumes/:resumeId', requireAuth(), async (req, res) => {
   try {
-    const { resumeId, userId } = req.params;
+    const { resumeId } = req.params;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
-
-    const userAccess = validateUserAccess(dbUser, userId);
-    if (!userAccess.ok) {
-      return res.status(userAccess.status).json({
-        message: userAccess.message,
+    if (!dbUser) {
+      return res.status(404).json({
+        message: 'Authenticated user was not found in the database',
       });
     }
 
-    const resume = await prisma.resume.findUnique({
+    const resumeById = await prisma.resume.findUnique({
       where: { id: resumeId },
     });
 
-    const ownership = validateResumeOwnership(resume, dbUser.id);
+    if (!resumeById) {
+      return res.status(404).json({
+        message: 'Resume not found',
+      });
+    }
+
+    const ownership = validateResumeOwnership(resumeById, dbUser.id);
     if (!ownership.ok) {
       return res.status(ownership.status).json({
         message: ownership.message,
       });
     }
-
     await prisma.resume.delete({
       where: { id: resumeId },
     });
@@ -282,6 +290,42 @@ router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
     return res.status(500).json({ message: 'Failed to delete resume' });
   }
 });
+
+// //DELETE ROUTE
+// router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
+//   try {
+//     const { resumeId, userId } = req.params;
+
+//     const dbUser = await getDbUserFromAuth(req, prisma);
+
+//     const userAccess = validateUserAccess(dbUser, userId);
+//     if (!userAccess.ok) {
+//       return res.status(userAccess.status).json({
+//         message: userAccess.message,
+//       });
+//     }
+
+//     const resume = await prisma.resume.findUnique({
+//       where: { id: resumeId },
+//     });
+
+//     const ownership = validateResumeOwnership(resume, dbUser.id);
+//     if (!ownership.ok) {
+//       return res.status(ownership.status).json({
+//         message: ownership.message,
+//       });
+//     }
+
+//     await prisma.resume.delete({
+//       where: { id: resumeId },
+//     });
+
+//     return res.status(200).json({ message: 'Resume deleted successfully' });
+//   } catch (error) {
+//     console.error('Delete error:', error);
+//     return res.status(500).json({ message: 'Failed to delete resume' });
+//   }
+// });
 
 //RESUME UPDATE PATH
 router.post(

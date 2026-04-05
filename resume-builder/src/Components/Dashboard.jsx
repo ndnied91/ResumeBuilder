@@ -29,12 +29,6 @@ export const Dashboard = () => {
 
   const savedJobLinksCount = jobApps.filter((job) => !!job.jobLink).length;
 
-  const uploadResume = () => {
-    //user gets a modal to add new resume
-    // user can either drag or select a resume from files
-    //resume gets parsed and added to resume
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-6xl">

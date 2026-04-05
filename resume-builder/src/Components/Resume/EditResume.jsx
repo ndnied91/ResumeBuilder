@@ -197,17 +197,14 @@ export const EditResume = () => {
 
     isSetSaving(true);
     const token = await getToken(); // from Clerk
-    const res = await fetch(
-      `/api/users/${userIds.dbId}/resumes/${currResume.resumeId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // ✅ THIS is what matters
-        },
-        body: JSON.stringify(currResume),
+    const res = await fetch(`/api/users/resumes/${currResume.resumeId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // ✅ THIS is what matters
       },
-    );
+      body: JSON.stringify(currResume),
+    });
 
     const data = await res.json();
     isSetSaving(false);
@@ -238,7 +235,6 @@ export const EditResume = () => {
             onClick={() => setShowModal(false)}
           />
           {/* Modal */}
-          import FocusTrap from 'focus-trap-react';
           {showModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               {/* Backdrop */}
