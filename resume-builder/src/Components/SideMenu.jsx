@@ -8,7 +8,8 @@ const SideMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { signOut, user } = useClerk();
 
-  const { setUserPane } = useAppContext();
+  const { setUserPane, userPane } = useAppContext();
+  console.log(userPane);
 
   const handleSignOut = async () => {
     await signOut({ redirectUrl: '/' }); // Redirect to the home page after sign out
@@ -16,11 +17,11 @@ const SideMenu = () => {
 
   const routes = [
     { key: 'dashboard', label: 'Dashboard' },
-    { key: 'resume', label: 'Resume' },
-    { key: 'resumeParser', label: 'Resume Parser' },
+    // { key: 'resume', label: 'Resume' },
+    { key: 'resumeParser', label: 'Current Resumes' },
     { key: 'generate', label: 'Generate Resume' },
     { key: 'ats', label: 'ATS Checker' },
-    { key: 'settings', label: 'Settings' },
+    // { key: 'settings', label: 'Settings' },
 
     // { key: 'history', label: 'Historical' },
   ];
@@ -30,7 +31,7 @@ const SideMenu = () => {
       <button
         key={route.key}
         onClick={() => setUserPane(route.key)}
-        className="mb-1 w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer"
+        className={`mb-1 w-full rounded-lg px-3 py-2 text-left text-sm  tracking-wide transition hover:bg-gray-100 hover:text-gray-900 cursor-pointer ${route.key === userPane ? 'text-gray-900 font-extrabold' : 'text-gray-500'} `}
       >
         {route.label}
       </button>
@@ -69,7 +70,7 @@ const SideMenu = () => {
 
           {/* Bottom Section */}
           <div className="border-t border-gray-200 bg-gray-50 p-3">
-            <div className="mb-3 flex items-center gap-3 rounded-xl p-2 transition ">
+            <div className="mb-3 flex items-center gap-3 rounded-xl p-2 transition">
               <div className="h-10 w-10 overflow-hidden rounded-full border border-gray-200">
                 <img
                   src={user.imageUrl}

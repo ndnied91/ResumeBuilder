@@ -59,7 +59,7 @@ function App() {
 
   const panes = {
     generate: <GenerateResume />,
-    resume: <Resume />,
+    // resume: <Resume />,
     settings: <Settings />,
     dashboard: <Dashboard />,
     ats: <FullATS />,
