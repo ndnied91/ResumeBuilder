@@ -711,7 +711,7 @@ export const ResumeParser = () => {
                 </p>
               </header>
 
-              <section className="mt-3">
+              <section className="mt-1.5">
                 <h2
                   className="font-bold tracking-wider"
                   style={{ fontSize: `${styleSettings.headingSize}px` }}
@@ -740,7 +740,7 @@ export const ResumeParser = () => {
                 </div>
               </section>
 
-              <section className="mt-2">
+              <section className="mt-1.5">
                 <h2
                   className="font-bold tracking-wider"
                   style={{ fontSize: `${styleSettings.headingSize}px` }}
@@ -803,7 +803,7 @@ export const ResumeParser = () => {
                 </div>
               </section>
 
-              <section className="mt-3">
+              <section className="mt-1.5">
                 <h2
                   className="font-bold tracking-wider"
                   style={{ fontSize: `${styleSettings.headingSize}px` }}
@@ -811,7 +811,7 @@ export const ResumeParser = () => {
                   Work Experience
                 </h2>
 
-                <div className="mt-1 space-y-2">
+                <div className="space-y-2">
                   {draftResume?.experience?.length
                     ? draftResume.experience.map((job, index) => (
                         <div key={`experience-${index}`}>

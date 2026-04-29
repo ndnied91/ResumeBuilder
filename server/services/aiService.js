@@ -5,7 +5,7 @@ export const generateResumeWithAI = async ({ currResume, jobLink }) => {
 You are a resume assistant.
 
 You will receive a current resume and a job URL.
-Your job is to rewrite and optimize the resume so it better matches the job posting while staying completely truthful.
+Your job is to ONLY improve the wording of the resume to better match the job posting — do NOT restructure, reorder, or remove anything.
 
 Current resume:
 ${JSON.stringify(currResume, null, 2)}
@@ -16,9 +16,16 @@ ${jobLink || 'No job URL provided'}
 Instructions:
 - Keep all information truthful
 - Do not invent experience, companies, dates, projects, or technologies
-- Improve wording, clarity, and impact
-- Optimize for ATS
-- Preserve the resume's general structure
+- ONLY improve wording, clarity, and impact — do not change the structure
+- Optimize for ATS through wording only
+- Preserve the resume's general structure exactly as provided
+- The "experience" array MUST contain the exact same number of jobs as the input — do not remove, skip, or merge any jobs
+- Each job's bullets must ONLY contain duties and responsibilities performed at that specific company during that specific date range
+- Do NOT move, copy, or merge bullets between jobs
+- Do NOT exceed the word count of the current resume 
+- Do NOT assign responsibilities from one company to another
+- Preserve the original bullets per job as the source of truth — only improve the wording
+- If you are unsure about a job's bullets, keep the original bullets and only improve the wording
 - Return valid JSON only
 - Do not include markdown
 - Do not include commentary
@@ -47,115 +54,27 @@ Return JSON in this exact format:
 
 Rules:
 - "summary" must always be a string
-- "experience" must always be an array
-- "skillGroups" must always be an array
+- "experience" must always be an array with the SAME number of entries as the input
+- "skillGroups" must always be an array and must reflect skills mentioned across all jobs
 - Each skill group must include a non-empty "category"
 - Each skill group must include an "items" array of strings
 - Do not use "skills" as a top-level field
 - Do not rename any fields
 - If there are no skill groups, return an empty array
 - If there are no notes, return an empty array
+
+Final self-check before returning:
+- Verify the "experience" array has the same number of jobs as the input
+- Verify no bullets were shared or moved between jobs
+- Verify "skillGroups" is not empty
+- Verify "summary" is present and tailored to the job URL
+- If any section is incomplete or missing, fix it before returning
 `;
 
   const response = await openai.responses.create({
     model: 'gpt-5',
     input: prompt,
   });
-
-  // const response = {
-  //   title: 'AI Resume',
-  //   summary:
-  //     'AI GEN - Frontend Software Engineer with 4+ years of experience building scalable, ADA-compliant chat and messaging platforms in React/Next.js for 1M+ monthly users. Specializes in modular, reusable component libraries; performance optimization; and multi-tenant, cross-client architectures. Strong collaborator with product, design, and backend teams; comfortable owning features end-to-end from discovery through production.',
-  //   experience: [
-  //     {
-  //       role: 'Software Engineer',
-  //       company: 'HCLTech',
-  //       date: 'Apr 2025 – March 2026',
-  //       bullets: [
-  //         'Owned frontend architecture for a reusable, multi-tenant Next.js chat platform powered by Microsoft Bot Framework, enabling rapid rollout across multiple enterprise clients.',
-  //         'Implemented extensible plugin patterns, feature flags, and theming to support client-specific requirements without code forks.',
-  //         'Established ADA/WCAG-compliant patterns (ARIA roles, keyboard navigation, focus management) across chat surfaces.',
-  //         'Optimized rendering, virtualization, and state management (Redux) to support complex, real-time conversations and rich message payloads at scale.',
-  //         'Partnered with product, design, and backend to define contracts, APIs, and roadmap; led code reviews and mentored junior engineers.',
-  //         'Guided clients through critical platform upgrades and migrations, improving reliability and stakeholder confidence.',
-  //       ],
-  //     },
-  //     {
-  //       role: 'Software Engineer',
-  //       company: 'Microsoft',
-  //       date: 'Dec 2022 – Apr 2025',
-  //       bullets: [
-  //         'Led frontend development of an enterprise chat application in React/Next.js within the Microsoft Bot Framework ecosystem, serving as a reusable foundation across multiple client portfolios (1M+ MAU).',
-  //         'Architected modular message rendering pipelines, conversation flows, theming, and extensibility hooks to standardize implementations across clients.',
-  //         'Built high-performance, reusable React components optimized for scalability, maintainability, and consistent UX.',
-  //         'Drove accessibility compliance by defining ADA/WCAG standards and reusable patterns; improved usability and parity across experiences.',
-  //         'Improved performance and stability by refining state management, minimizing unnecessary re-renders, and tuning data flows for real-time workloads.',
-  //         'Collaborated with product managers, designers, and backend engineers to align frontend architecture with long-term platform goals.',
-  //       ],
-  //     },
-  //     {
-  //       role: 'Jr. Software Engineer',
-  //       company: 'Nuance Communications (A Microsoft Company)',
-  //       date: 'Oct 2021 – Dec 2022',
-  //       bullets: [
-  //         'Contributed to core chat features and UI components in React/Next.js for enterprise assistants integrated with Microsoft Bot Framework.',
-  //         'Implemented configurable theming and layout systems to enable rapid, brand-aligned deployments across clients.',
-  //         'Ensured accessibility standards were met across components, partnering with design to refine UX for keyboard and screen reader users.',
-  //       ],
-  //     },
-  //     {
-  //       role: 'UX Strategies Technical Team Lead (Apple Pay) – Career Experience',
-  //       company: 'Apple',
-  //       date: 'Jan 2021 – Jun 2021',
-  //       bullets: [
-  //         'Improved Apple Pay transaction KPIs by 10% through targeted UX and technical solutions.',
-  //         'Led a cross-functional effort to resolve technical issues across 200+ merchant platforms.',
-  //         'Facilitated weekly meetings to align priorities, surface blockers, and accelerate delivery.',
-  //       ],
-  //     },
-  //   ],
-  //   skills: [
-  //     {
-  //       category: 'Frontend',
-  //       items: [
-  //         'React',
-  //         'Next.js',
-  //         'TypeScript',
-  //         'JavaScript (ES6+)',
-  //         'React Native',
-  //         'Redux',
-  //         'Tailwind CSS',
-  //         'HTML5/CSS3',
-  //         'Accessibility (ADA/WCAG, ARIA)',
-  //         'Design Systems',
-  //         'Performance Optimization',
-  //       ],
-  //     },
-  //     {
-  //       category: 'Conversational Platforms',
-  //       items: ['Microsoft Bot Framework', 'Chat UI', 'Real-time interactions'],
-  //     },
-  //     {
-  //       category: 'Backend & APIs',
-  //       items: ['Node.js', 'Express', 'FastAPI', 'REST APIs', 'Python'],
-  //     },
-  //     {
-  //       category: 'Databases',
-  //       items: ['PostgreSQL', 'MongoDB', 'Supabase'],
-  //     },
-  //     {
-  //       category: 'Version Control & CI/CD',
-  //       items: ['Git', 'GitHub', 'GitLab', 'CI/CD pipelines', 'Docker'],
-  //     },
-  //   ],
-  //   notes: [
-  //     'Tailored for EliseAI-style roles focused on conversational UI and real-time chat in React/Next.js; emphasized accessibility, modular architecture, and multi-tenant reuse.',
-  //     'Removed duplicate and placeholder bullets; clarified impact and ownership while keeping technology references truthful to the original content.',
-  //     'Consider adding concrete metrics (e.g., performance gains, load-time reductions) and testing tools used (e.g., Jest, React Testing Library, Cypress) if applicable to further boost ATS alignment.',
-  //     'Recommend standardizing contact info and removing stray placeholders (e.g., extra numbers in name/portfolio) on the final resume document.',
-  //     'Education section can be included in the final resume layout: Kean University — B.S. in Computer Science, Minor in Data Science; Lambda Alpha Sigma Honors Society.',
-  //   ],
-  // };
 
   return response.output_text;
 };
