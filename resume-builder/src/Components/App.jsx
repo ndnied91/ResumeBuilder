@@ -1,7 +1,6 @@
 import SideMenu from './SideMenu';
 import { useAppContext } from '../context/useAppContext';
 import { GenerateResume } from './GenerateResume';
-// import { Resume } from './Resume/Resume';
 import { Settings } from './Settings';
 import { useEffect } from 'react';
 import { Dashboard } from './Dashboard';

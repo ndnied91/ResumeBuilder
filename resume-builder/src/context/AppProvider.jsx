@@ -12,9 +12,7 @@ export function AppProvider({ children }) {
   const [jobApps, setJobApps] = useState([]);
   const [analysisResult, setAnalysisResult] = useState({});
   const [selectedResumeId_ATS, setSelectedResumeId_ATS] = useState(''); //only for ATS
-  const [jobLink_ATS, setJobLink_ATS] = useState(
-    'https://job-boards.greenhouse.io/justworks/jobs/7733611?gh_jid=7733611&gh_src=f08327d91us&source=LinkedIn',
-  );
+  const [jobLink_ATS, setJobLink_ATS] = useState('');
 
   const [isAnalyzing, setIsAnalyzing] = useState(false); //for ats route
 
@@ -70,7 +68,7 @@ export function AppProvider({ children }) {
   };
 
   // const createResume = async (getToken, seed = false) => {
-  const createResume = async (getToken, resumeOverride = null) => {
+  const createResume = async (getToken, resumeOverride = null, applied) => {
     const token = await getToken();
 
     const resumeToSave = resumeOverride || currResume;
@@ -85,6 +83,7 @@ export function AppProvider({ children }) {
         },
         body: JSON.stringify({
           currResume: resumeToSave,
+          applied,
         }),
       });
 

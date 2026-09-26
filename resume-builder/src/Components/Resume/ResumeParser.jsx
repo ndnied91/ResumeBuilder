@@ -364,6 +364,7 @@ export const ResumeParser = () => {
     setIsDuplicating(true);
     try {
       const copy = duplicateResume(currResume);
+      console.log(copy);
       const saved = await createResume(getToken, copy);
 
       if (!saved) return;
@@ -426,16 +427,6 @@ export const ResumeParser = () => {
 
           {showEdit ? (
             <>
-              <button
-                type="button"
-                onClick={() => setCurrResume(blankResume)}
-                disabled={isBusy}
-                className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none disabled:hover:border-gray-200 disabled:hover:bg-gray-100"
-              >
-                <IoMdAdd size={18} />
-                Create New
-              </button>
-
               <button
                 type="button"
                 onClick={handleDuplicate}

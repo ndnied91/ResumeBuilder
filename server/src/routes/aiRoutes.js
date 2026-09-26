@@ -20,7 +20,7 @@ const router = express.Router();
 router.post('/', requireAuth(), async (req, res) => {
   try {
     const { userId: authUserId } = getAuth(req);
-    const { userId, currResume, jobLink } = req.body;
+    const { userId, currResume, jobLink, isApplied } = req.body;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
 
@@ -47,13 +47,16 @@ router.post('/', requireAuth(), async (req, res) => {
       jobLink,
     );
     //now save this into the database;
-    await saveJobApplication({
-      userId: dbUser.id,
-      resumeId: savedResume.id,
-      company: savedResume.targetCompany,
-      jobTitle: 'Software Engineer',
-      jobLink: currResume.jobLink,
-    });
+
+    if (isApplied) {
+      await saveJobApplication({
+        userId: dbUser.id,
+        resumeId: savedResume.id,
+        company: savedResume.targetCompany,
+        jobTitle: 'Software Engineer',
+        jobLink: currResume.jobLink,
+      });
+    }
 
     return res.status(201).json(savedResume);
   } catch (error) {

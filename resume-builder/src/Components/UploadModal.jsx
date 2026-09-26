@@ -124,7 +124,7 @@ export const UploadModal = ({ setIsUploadModal }) => {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Justworks Resume"
+                placeholder="e.g. Resume"
                 className="w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-gray-900 focus:ring-4 focus:ring-gray-100"
               />
             </div>

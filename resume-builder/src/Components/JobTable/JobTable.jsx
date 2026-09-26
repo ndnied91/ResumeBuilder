@@ -138,7 +138,7 @@ export const JobTable = () => {
 
     if (found) {
       setCurrResume(formatResumeForClient(found));
-      setUserPane('resume');
+      setUserPane('resumeParser');
     } else {
       console.log('unable to view this resume');
     }

@@ -71,7 +71,7 @@ router.post('/', requireAuth(), async (req, res) => {
     // const score = {
     //   score: 85,
     //   summary:
-    //     'Strong frontend-focused profile with React, Next.js, and TypeScript that likely aligns with a Justworks Frontend/Software Engineer role. Demonstrated experience building scalable, accessible UI and collaborating cross-functionally. Gaps include missing explicit testing/QA tooling, cloud experience, GraphQL, and domain alignment with HR/payroll/fintech. Resume clarity is impacted by repeated and one incomplete bullet, which may reduce ATS quality.',
+    //     'Strong frontend-focused profile with React, Next.js, and TypeScript that likely aligns with a Frontend/Software Engineer role. Demonstrated experience building scalable, accessible UI and collaborating cross-functionally. Gaps include missing explicit testing/QA tooling, cloud experience, GraphQL, and domain alignment with HR/payroll/fintech. Resume clarity is impacted by repeated and one incomplete bullet, which may reduce ATS quality.',
     //   strengths: [
     //     'React, Next.js, TypeScript, Redux, TailwindCSS proficiency',
     //     'Accessibility (ADA/WCAG) focus and patterns',
@@ -91,7 +91,7 @@ router.post('/', requireAuth(), async (req, res) => {
     //     'No security/compliance keywords (SSO/OAuth, SOC2, PII) relevant to HR/payroll domain',
     //     'Potential seniority gap if role targets Senior+ (summary states 4+ years)',
     //     'Resume clarity issues: duplicated bullets across roles and one truncated bullet',
-    //     'No Ruby/Rails exposure if Justworks stack leans that way',
+    //     'No Ruby/Rails exposure if stack leans that way',
     //     'Location/onsite-hybrid flexibility not stated for a NYC-based company',
     //   ],
     //   recommendations: [
@@ -105,7 +105,7 @@ router.post('/', requireAuth(), async (req, res) => {
     //     'Fix the truncated bullet and remove duplicated bullets across roles; tailor responsibilities per company to improve ATS deduping.',
     //     'If applicable, add security/compliance experience (OAuth2/OIDC, secure handling of PII, SOC2 practices) relevant to HR/payroll.',
     //     'Clarify seniority and scope (team size, mentorship, ownership of initiatives) to align with potential Senior/Staff expectations.',
-    //     'Note location flexibility (NYC hybrid/commute-ready) to match possible onsite expectations at Justworks.',
+    //     'Note location flexibility (NYC hybrid/commute-ready) to match possible onsite expectations at .',
     //     'Map keywords from the job post explicitly in Skills (e.g., feature flags, feature rollout, A/B testing, Redux Toolkit, React Query/TanStack Query).',
     //   ],
     // };

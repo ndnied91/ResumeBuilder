@@ -20,7 +20,7 @@ export const Dashboard = () => {
 
   const handleSeedResume = async () => {
     setCurrResume(seedResume);
-    await createResume(getToken, seedResume);
+    await createResume(getToken, seedResume, false);
   };
 
   const interviewingCount = jobApps.filter(

@@ -23,7 +23,7 @@ const upload = multer();
 //creates a resume
 router.post('/resumes', requireAuth(), async (req, res) => {
   try {
-    const { currResume } = req.body;
+    const { currResume, applied } = req.body;
 
     if (!currResume) {
       return res.status(400).json({ message: 'Missing currResume' });
@@ -95,13 +95,15 @@ router.post('/resumes', requireAuth(), async (req, res) => {
       },
     });
 
-    const savedApplication = await saveJobApplication({
-      userId: dbUser.id,
-      resumeId: resume.id,
-      company: resume.targetCompany,
-      jobTitle: 'Software Engineer',
-      jobLink: currResume.jobLink,
-    });
+    if (applied) {
+      await saveJobApplication({
+        userId: dbUser.id,
+        resumeId: resume.id,
+        company: resume.targetCompany,
+        jobTitle: 'Software Engineer',
+        jobLink: currResume.jobLink,
+      });
+    }
 
     return res.status(201).json(resume);
   } catch (error) {

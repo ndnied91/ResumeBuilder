@@ -21,6 +21,8 @@ export const GenerateResume = () => {
 
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const [isApplied, setIsApplied] = useState(true);
+
   const handleSelectResume = (resumeId) => {
     const found = allResumes.find((r) => r.id === resumeId);
     if (!found) return;
@@ -47,6 +49,7 @@ export const GenerateResume = () => {
           userId: userIds.dbId,
           currResume,
           jobLink,
+          isApplied, //set job in application
         }),
       });
 
@@ -64,7 +67,7 @@ export const GenerateResume = () => {
         duration: 2000,
       });
 
-      setUserPane('resume'); //brings user to new resume
+      setUserPane('resumeParser'); //brings user to new resume
     } catch (error) {
       console.error('Failed to generate resume:', error);
       toast.error('Failed to generate resume');
@@ -134,7 +137,7 @@ export const GenerateResume = () => {
           </section>
 
           {/* Action */}
-          <section className="flex justify-end">
+          <section className="flex justify-end gap-2">
             <button
               onClick={generateResume}
               disabled={isGenerating}
@@ -150,6 +153,18 @@ export const GenerateResume = () => {
 
               {isGenerating ? 'Generating...' : 'Generate Resume'}
             </button>
+
+            <div
+              className="px-4 py-2 rounded-lg border flex flex-row items-center gap-2 cursor-pointer"
+              onChange={() => setIsApplied((prev) => !prev)}
+            >
+              <label className="cursor-pointer"> Set job as applied </label>
+              <input
+                className="cursor-pointer"
+                type="checkbox"
+                checked={isApplied}
+              />
+            </div>
           </section>
         </div>
       </div>
