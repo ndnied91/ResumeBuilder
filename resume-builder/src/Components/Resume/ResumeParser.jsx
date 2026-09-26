@@ -84,6 +84,46 @@ export const ResumeParser = () => {
     }
   };
 
+  // const addBulletToJob = (jobIndex) => {
+  //   setDraftResume((prev) => ({
+  //     ...prev,
+  //     experience: prev.experience.map((job, index) =>
+  //       index === jobIndex
+  //         ? { ...job, bullets: [...(job.bullets || []), ''] }
+  //         : job,
+  //     ),
+  //   }));
+
+  //   const removeBullet = (jobIndex, bulletIndex) => {
+  //     console.log(jobIndex, bulletIndex);
+  //     const update = (prev) => ({
+  //       ...prev,
+  //       experience: prev.experience.map((job, index) =>
+  //         index === jobIndex
+  //           ? {
+  //               ...job,
+  //               bullets: (job.bullets || []).filter(
+  //                 (_, i) => i !== bulletIndex,
+  //               ),
+  //             }
+  //           : job,
+  //       ),
+  //     });
+
+  //     setDraftResume(update);
+  //     setCurrResume(update);
+  //   };
+
+  //   setCurrResume((prev) => ({
+  //     ...prev,
+  //     experience: prev.experience.map((job, index) =>
+  //       index === jobIndex
+  //         ? { ...job, bullets: [...(job.bullets || []), ''] }
+  //         : job,
+  //     ),
+  //   }));
+  // };
+
   const addBulletToJob = (jobIndex) => {
     setDraftResume((prev) => ({
       ...prev,
@@ -102,6 +142,23 @@ export const ResumeParser = () => {
           : job,
       ),
     }));
+  };
+
+  const removeBullet = (jobIndex, bulletIndex) => {
+    const update = (prev) => ({
+      ...prev,
+      experience: prev.experience.map((job, index) =>
+        index === jobIndex
+          ? {
+              ...job,
+              bullets: (job.bullets || []).filter((_, i) => i !== bulletIndex),
+            }
+          : job,
+      ),
+    });
+
+    setDraftResume(update);
+    setCurrResume(update);
   };
 
   const commitTopLevelField = (field, value) => {
@@ -402,17 +459,8 @@ export const ResumeParser = () => {
                     : 'hidden'
                 }`}
               >
-                {isSaving ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <FaTrashCan size={16} />
-                    Delete Resume
-                  </>
-                )}
+                <FaTrashCan size={16} />
+                Delete Resume
               </button>
             </div>
 
@@ -888,7 +936,7 @@ export const ResumeParser = () => {
                             {job?.role || ''}
                           </p>
 
-                          <ul
+                          {/* <ul
                             style={{ fontSize: `${styleSettings.bodySize}px` }}
                             className="mt-[2px] list-disc pl-4 leading-[1.3]"
                           >
@@ -922,6 +970,72 @@ export const ResumeParser = () => {
                                     }
                                   >
                                     {bullet || ''}
+                                  </li>
+                                ))
+                              : null}
+                          </ul> */}
+
+                          <ul
+                            style={{ fontSize: `${styleSettings.bodySize}px` }}
+                            className="mt-[2px] list-disc pl-4 leading-[1.3]"
+                          >
+                            {job?.bullets?.length
+                              ? job.bullets.map((bullet, bulletIndex) => (
+                                  <li
+                                    key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
+                                    className="group"
+                                  >
+                                    <div className="flex items-start gap-2">
+                                      <span
+                                        contentEditable={showEdit}
+                                        suppressContentEditableWarning
+                                        spellCheck={false}
+                                        className={`flex-1 whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
+                                          `job-bullet-${index}-${bulletIndex}`,
+                                        )}`}
+                                        onFocus={() =>
+                                          setActiveEditor(
+                                            `job-bullet-${index}-${bulletIndex}`,
+                                          )
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addBulletToJob(index);
+                                          }
+
+                                          if (
+                                            e.key === 'Backspace' &&
+                                            !e.currentTarget.textContent.trim()
+                                          ) {
+                                            e.preventDefault();
+                                            removeBullet(index, bulletIndex);
+                                          }
+                                        }}
+                                        onBlur={(e) =>
+                                          commitBullet(
+                                            index,
+                                            bulletIndex,
+                                            e.currentTarget.textContent || '',
+                                          )
+                                        }
+                                      >
+                                        {bullet || ''}
+                                      </span>
+
+                                      {showEdit && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            removeBullet(index, bulletIndex)
+                                          }
+                                          className="shrink-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+                                          aria-label="Remove bullet"
+                                        >
+                                          ✕
+                                        </button>
+                                      )}
+                                    </div>
                                   </li>
                                 ))
                               : null}
