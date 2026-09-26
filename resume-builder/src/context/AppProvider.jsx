@@ -98,6 +98,7 @@ export function AppProvider({ children }) {
       // add new resume to all resumes
       setAllResumes((prev) => [...prev, data]);
       await getJobApps(getToken, userIds.dbId);
+      return data;
     } catch (error) {
       console.error('Failed to save resume:', error);
     }
