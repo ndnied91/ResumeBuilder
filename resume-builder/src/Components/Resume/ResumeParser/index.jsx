@@ -294,7 +294,7 @@ export const ResumeParser = () => {
         <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4 ">
           {showEdit && (
             <div className="flex justify-center">
-              <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-[8.5in]">
+              <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-204">
                 <div className="grid gap-4 md:grid-cols-3">
                   <Input
                     label="Title"
@@ -329,10 +329,10 @@ export const ResumeParser = () => {
 
           {/* end of title  */}
           <div className="flex min-w-0 justify-center">
-            <div className="relative w-full max-w-[8.5in]">
+            <div className="relative w-full max-w-204">
               <div
                 ref={resumeRef}
-                className="w-full min-h-[11in] bg-white px-12 py-8 text-black print:min-h-0 [&_a]:underline"
+                className="w-full min-h-264 bg-white px-12 py-8 text-black print:min-h-0 [&_a]:underline"
                 style={{
                   fontFamily: 'Calibri, Arial, Helvetica, sans-serif',
                 }}
@@ -387,7 +387,7 @@ export const ResumeParser = () => {
                     Technical Skills
                   </h2>
 
-                  <div className="space-y-[2px]">
+                  <div className="space-y-0.5">
                     {currResume?.skills?.map((skillGroup, index) => (
                       <p
                         key={`skill-group-${index}`}
@@ -459,7 +459,7 @@ export const ResumeParser = () => {
                           className="italic leading-tight"
                         />
 
-                        <ul className="mt-[2px] list-disc pl-4 leading-[1.3]">
+                        <ul className="mt-0.5 list-disc pl-4 leading-[1.3]">
                           {job.bullets?.map((bullet, bulletIndex) => (
                             <li
                               key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
