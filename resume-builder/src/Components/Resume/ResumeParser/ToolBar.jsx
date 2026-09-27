@@ -29,7 +29,7 @@ const SizeControl = ({ label, value, onDecrement, onIncrement }) => (
     >
       -
     </button>
-    <span className="min-w-[42px] text-center text-xs text-gray-700">
+    <span className="min-w-10.5 text-center text-xs text-gray-700">
       {value}px
     </span>
     <button

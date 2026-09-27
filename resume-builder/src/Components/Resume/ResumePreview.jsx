@@ -17,7 +17,7 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
         <div className="flex min-w-0 justify-center">
           <div
             ref={resumeRef}
-            className="w-full max-w-[8.5in] min-h-[11in] bg-white px-12 py-9 text-black"
+            className="w-full max-w-204 min-h-264 bg-white px-12 py-9 text-black"
             style={{
               fontFamily: 'Calibri, Arial, Helvetica, sans-serif',
             }}
@@ -45,7 +45,7 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
               <h2 className="text-[15px] font-bold tracking-wider">
                 Technical Skills
               </h2>
-              <div className="space-y-[2px]">
+              <div className="pace-y-0.5">
                 {currResume.skills
                   ? currResume.skills.map((skillGroup, index) => (
                       <p key={index} className="text-[12px] leading-[1.3]">
@@ -80,7 +80,7 @@ export const FormatPreview = ({ showEdit, resumeRef }) => {
                         <p className="text-[12px] italic leading-tight">
                           {job?.role || ''}
                         </p>
-                        <ul className="mt-[2px] list-disc pl-4 text-[12px] leading-[1.3]">
+                        <ul className="mt-0.5 list-disc pl-4 text-[12px] leading-[1.3]">
                           {job?.bullets?.length > 0 &&
                             job.bullets.map((bullet, bulletIndex) => (
                               <li key={bulletIndex}>{bullet}</li>

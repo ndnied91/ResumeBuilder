@@ -34,7 +34,7 @@ const Header = ({
         <select
           value={currResume?.resumeId || currResume?.id || ''}
           onChange={(e) => handleSelectResume(e.target.value)}
-          className="h-11 min-w-[190px] rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          className="h-11 min-w-47.5 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
         >
           <option value="" disabled>
             Select Resume

@@ -110,7 +110,7 @@ export const GenerateResume = () => {
           <section className="mb-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
               <p className="text-sm font-medium text-gray-500">Job Link</p>
-              <p className="mt-3 break-words text-sm text-gray-700">
+              <p className="mt-3 wrap-break-word text-sm text-gray-700">
                 {jobLink || 'No job link added yet.'}
               </p>
             </div>

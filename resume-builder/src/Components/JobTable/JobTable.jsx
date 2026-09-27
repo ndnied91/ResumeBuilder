@@ -334,7 +334,7 @@ export const JobTable = () => {
                       }`}
                     >
                       {/* Company */}
-                      <td className="w-[250px] px-4 py-3">
+                      <td className="w-62.5 px-4 py-3">
                         <div className="px-2 py-1">
                           {editingJobId === job.id ? (
                             <input
@@ -356,7 +356,7 @@ export const JobTable = () => {
                       </td>
 
                       {/* Role */}
-                      <td className="w-[250px] px-4 py-3">
+                      <td className="w-62.5 px-4 py-3">
                         {editingJobId === job.id ? (
                           <input
                             type="text"
