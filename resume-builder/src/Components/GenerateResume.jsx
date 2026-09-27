@@ -155,17 +155,15 @@ export const GenerateResume = () => {
               {isGenerating ? 'Generating...' : 'Generate Resume'}
             </button>
 
-            <div
-              className="px-4 py-2 rounded-lg border flex flex-row items-center gap-2 cursor-pointer"
-              onChange={() => setIsApplied((prev) => !prev)}
-            >
-              <label className="cursor-pointer"> Set job as applied </label>
+            <label className="px-4 py-2 rounded-lg border flex flex-row items-center gap-2 cursor-pointer">
+              <span>Set job as applied</span>
               <input
                 className="cursor-pointer"
                 type="checkbox"
                 checked={isApplied}
+                onChange={(e) => setIsApplied(e.target.checked)}
               />
-            </div>
+            </label>
           </section>
         </div>
       </div>

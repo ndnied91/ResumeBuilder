@@ -5,7 +5,7 @@ import { useUserContext } from '../context/user/UserContext';
 import { useClerk } from '@clerk/clerk-react';
 
 const SideMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const { signOut, user } = useClerk();
 
   const { setUserPane, userPane } = useUserContext();

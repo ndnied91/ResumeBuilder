@@ -53,7 +53,7 @@ export const Dashboard = () => {
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Unique Resumes</p>
+            <p className="text-sm font-medium text-gray-500">Resumes</p>
             <h2 className="mt-1 text-3xl font-bold text-gray-900">
               {allResumes.length}
             </h2>

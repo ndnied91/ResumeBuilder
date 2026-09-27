@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAppContext } from '../../context/useAppContext';
 import { MdModeEdit } from 'react-icons/md';
-import { useReactToPrint } from 'react-to-print';
 import { FaRegFilePdf, FaTrashCan } from 'react-icons/fa6';
 import { FaRegCopy } from 'react-icons/fa';
-import { mapResumeToState, blankResume } from '../../utils/helper';
 import { IoMdAdd } from 'react-icons/io';
 import toast from 'react-hot-toast';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import DOMPurify from 'dompurify';
-import DeleteModal from './DeleteModal';
+
+import { useAppContext } from '../../../context/useAppContext';
+import { useReactToPrint } from 'react-to-print';
+import { mapResumeToState } from '../../../utils/helper';
+import DeleteModal from '../DeleteModal';
+import Header from './Header';
+import ToolBar from './ToolBar';
 
 const PAGE_HEIGHT_PX = 11 * 96; // 11in at 96 CSS px per inch
 
@@ -80,14 +83,6 @@ export const ResumeParser = () => {
     handlePrint();
   };
 
-  const handleSelectResume = (resumeId) => {
-    const found = allResumes.find((r) => (r.resumeId || r.id) === resumeId);
-    if (!found) return;
-
-    const mapped = mapResumeToState(found);
-    setCurrResume(mapped);
-  };
-
   const styleSettings = {
     ...defaultStyleSettings,
     ...(draftResume?.styleSettings || {}),
@@ -97,12 +92,6 @@ export const ResumeParser = () => {
   const overflowPx = contentHeight - PAGE_HEIGHT_PX;
   const isOverflowing = overflowPx > 1;
   const overflowLines = Math.ceil(overflowPx / (styleSettings.bodySize * 1.3));
-
-  const runCommand = (command, value = null) => {
-    // Use <b>/<i>/<u> tags instead of inline style spans (Firefox default)
-    document.execCommand('styleWithCSS', false, false);
-    document.execCommand(command, false, value);
-  };
 
   const editableClass = showEdit
     ? 'rounded outline-none transition hover:bg-yellow-50 focus:bg-yellow-50'
@@ -395,263 +384,33 @@ export const ResumeParser = () => {
           showDeleteModal={showDeleteModal}
         />
       )}
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="mt-1 text-3xl font-bold text-gray-900">
-            Format Resume
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Edit your content and preview the final resume side by side.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={currResume?.resumeId || currResume?.id || ''}
-            onChange={(e) => handleSelectResume(e.target.value)}
-            className="h-11 min-w-[190px] rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-          >
-            <option value="" disabled>
-              Select Resume
-            </option>
-
-            {allResumes?.map((resume) => (
-              <option
-                key={resume.resumeId || resume.id}
-                value={resume.resumeId || resume.id}
-              >
-                {resume.targetCompany || 'Untitled Resume'}
-              </option>
-            ))}
-          </select>
-
-          {showEdit ? (
-            <>
-              <button
-                type="button"
-                onClick={handleDuplicate}
-                disabled={isBusy}
-                className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none disabled:hover:border-gray-200 disabled:hover:bg-gray-100"
-              >
-                <FaRegCopy size={18} />
-                Duplicate
-              </button>
-            </>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => setShowEdit((prev) => !prev)}
-            className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-gray-300 hover:bg-gray-50"
-          >
-            <MdModeEdit size={18} />
-            {showEdit ? 'Hide Editor' : 'Show Editor'}
-          </button>
-
-          {isOverflowing && (
-            <span className="flex h-11 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700">
-              ~{overflowLines} {overflowLines === 1 ? 'line' : 'lines'} over 1
-              page
-            </span>
-          )}
-
-          <button
-            type="button"
-            onClick={handleSafePrint}
-            disabled={showEdit}
-            className={`flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition ${
-              showEdit
-                ? 'cursor-not-allowed bg-gray-100 text-gray-400 border border-gray-200'
-                : 'cursor-pointer bg-white text-gray-900 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <FaRegFilePdf size={18} />
-            Export PDF
-          </button>
-        </div>
-      </div>
+      <Header
+        showEdit={showEdit}
+        setShowEdit={setShowEdit}
+        handleDuplicate={handleDuplicate}
+        isBusy={isBusy}
+        isOverflowing={isOverflowing}
+        overflowLines={overflowLines}
+        handleSafePrint={handleSafePrint}
+      />
 
       <div
         className={`min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ${
           !showEdit ? 'mx-auto w-full max-w-4xl' : ''
         }`}
       >
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div className="flex w-full flex-row justify-between rounded-xl">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={updateResume}
-                disabled={isBusy}
-                className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 h-12 text-sm font-medium transition ${
-                  showEdit
-                    ? isBusy
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-gray-900 text-white hover:bg-gray-700 cursor-pointer'
-                    : 'hidden'
-                }`}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <MdModeEdit size={16} />
-                    Save Resume
-                  </>
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(true)}
-                disabled={isBusy}
-                className={`flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition ${
-                  showEdit
-                    ? isBusy
-                      ? 'bg-red-300 text-white cursor-not-allowed'
-                      : 'rounded-lg border border-red-200 bg-white px-4 text-sm font-medium text-red-700 transition hover:bg-red-100 cursor-pointer'
-                    : 'hidden'
-                }`}
-              >
-                <FaTrashCan size={16} />
-                Delete Resume
-              </button>
-            </div>
-
-            {showEdit && (
-              <>
-                <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      runCommand('bold');
-                    }}
-                    className="cursor-pointer rounded-md bg-white px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                  >
-                    Bold
-                  </button>
-
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      runCommand('italic');
-                    }}
-                    className="cursor-pointer rounded-md bg-white px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                  >
-                    Italic
-                  </button>
-
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      runCommand('underline');
-                    }}
-                    className="cursor-pointer rounded-md bg-white px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                  >
-                    Underline
-                  </button>
-
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const url = window.prompt('Enter URL');
-                      if (url) runCommand('createLink', url);
-                    }}
-                    className="cursor-pointer rounded-md bg-white px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-                  >
-                    Link
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">
-                      Name
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => decrementStyle('nameSize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      -
-                    </button>
-                    <span className="min-w-[42px] text-center text-xs text-gray-700">
-                      {styleSettings.nameSize}px
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => incrementStyle('nameSize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">
-                      Headings
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => decrementStyle('headingSize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      -
-                    </button>
-                    <span className="min-w-[42px] text-center text-xs text-gray-700">
-                      {styleSettings.headingSize}px
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => incrementStyle('headingSize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-600">
-                      Body
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => decrementStyle('bodySize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      -
-                    </button>
-                    <span className="min-w-[42px] text-center text-xs text-gray-700">
-                      {styleSettings.bodySize}px
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => incrementStyle('bodySize')}
-                      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={resetStyles}
-                    className="cursor-pointer rounded-md bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
-                  >
-                    Reset Sizes
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <ToolBar
+          showEdit={showEdit}
+          isBusy={isBusy}
+          isSaving={isSaving}
+          updateResume={updateResume}
+          setShowDeleteModal={setShowDeleteModal}
+          styleSettings={styleSettings}
+          incrementStyle={incrementStyle}
+          decrementStyle={decrementStyle}
+          resetStyles={resetStyles}
+        />
 
         <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4 ">
           {showEdit && (

@@ -14,7 +14,7 @@ import { FullATS } from './ATS/FullATS';
 
 import { History } from './History';
 
-import { ResumeParser } from './Resume/ResumeParser';
+import { ResumeParser } from './Resume/ResumeParser/';
 
 function App() {
   const { getResumes } = useAppContext();
