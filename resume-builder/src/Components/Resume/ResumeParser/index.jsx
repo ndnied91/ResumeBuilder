@@ -13,23 +13,13 @@ import { mapResumeToState } from '../../../utils/helper';
 import DeleteModal from '../DeleteModal';
 import Header from './Header';
 import ToolBar from './ToolBar';
+import { Input } from './Input';
+
+import EditableField from './EditableField';
+
+import { sanitizeHtml, sanitizeText } from './utils';
 
 const PAGE_HEIGHT_PX = 11 * 96; // 11in at 96 CSS px per inch
-
-const RICH_TEXT_CONFIG = {
-  ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'a', 'br'],
-  ALLOWED_ATTR: ['href', 'target', 'rel'],
-};
-
-const sanitizeHtml = (html) => {
-  if (!html) return '';
-  return DOMPurify.sanitize(html, RICH_TEXT_CONFIG)
-    .replace(/&nbsp;/g, ' ')
-    .replace(/(<br\s*\/?>\s*)+$/i, '')
-    .trim();
-};
-
-const asHtml = (value) => ({ __html: value || '' });
 
 export const ResumeParser = () => {
   const { currResume, setCurrResume, allResumes, setAllResumes, createResume } =
@@ -37,8 +27,6 @@ export const ResumeParser = () => {
 
   const resumeRef = useRef(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [activeEditor, setActiveEditor] = useState(null);
-  const [draftResume, setDraftResume] = useState(currResume);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false); //for deleting resumes
 
@@ -49,10 +37,6 @@ export const ResumeParser = () => {
   const [isDuplicating, setIsDuplicating] = useState(false);
 
   const [contentHeight, setContentHeight] = useState(0);
-
-  useEffect(() => {
-    setDraftResume(currResume);
-  }, [currResume]);
 
   useEffect(() => {
     const el = resumeRef.current;
@@ -85,7 +69,6 @@ export const ResumeParser = () => {
 
   const styleSettings = {
     ...defaultStyleSettings,
-    ...(draftResume?.styleSettings || {}),
   };
 
   const pageCount = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT_PX));
@@ -97,156 +80,77 @@ export const ResumeParser = () => {
     ? 'rounded outline-none transition hover:bg-yellow-50 focus:bg-yellow-50'
     : '';
 
-  const activeHighlight = (key) =>
-    showEdit && activeEditor === key ? 'bg-yellow-50' : '';
-
-  const sanitizeText = (value) => {
-    if (!value) return '';
-    return value
-      .replace(/ /g, ' ')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  };
-
-  const handlePlainTextKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.execCommand('insertLineBreak');
-    }
-  };
-
-  const addBulletToJob = (jobIndex) => {
-    setDraftResume((prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex
-          ? { ...job, bullets: [...(job.bullets || []), ''] }
-          : job,
-      ),
-    }));
-
+  // Helper: change one job
+  const updateJob = (jobIndex, updater) => {
     setCurrResume((prev) => ({
       ...prev,
       experience: prev.experience.map((job, index) =>
-        index === jobIndex
-          ? { ...job, bullets: [...(job.bullets || []), ''] }
-          : job,
+        index === jobIndex ? updater(job) : job,
       ),
+    }));
+  };
+
+  // Helper: change one skill group
+  const updateSkillGroup = (groupIndex, updater) => {
+    setCurrResume((prev) => ({
+      ...prev,
+      skills: prev.skills.map((group, index) =>
+        index === groupIndex ? updater(group) : group,
+      ),
+    }));
+  };
+
+  const addBulletToJob = (jobIndex) => {
+    updateJob(jobIndex, (job) => ({
+      ...job,
+      bullets: [...(job.bullets || []), ''],
     }));
   };
 
   const removeBullet = (jobIndex, bulletIndex) => {
-    const update = (prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex
-          ? {
-              ...job,
-              bullets: (job.bullets || []).filter((_, i) => i !== bulletIndex),
-            }
-          : job,
-      ),
-    });
-
-    setDraftResume(update);
-    setCurrResume(update);
+    updateJob(jobIndex, (job) => ({
+      ...job,
+      bullets: (job.bullets || []).filter((_, i) => i !== bulletIndex),
+    }));
   };
 
-  // Plain text fields (name, title input)
+  // Plain text fields (name, title inputs)
   const commitTopLevelField = (field, value) => {
     const cleanedValue = sanitizeText(value);
+    setCurrResume((prev) => ({ ...prev, [field]: cleanedValue }));
+  };
 
-    setDraftResume((prev) => ({
-      ...prev,
-      [field]: cleanedValue,
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      [field]: cleanedValue,
-    }));
+  // Raw value while typing (no trimming)
+  const setTopLevelField = (field, value) => {
+    setCurrResume((prev) => ({ ...prev, [field]: value }));
   };
 
   // Rich text fields (keep bold / italic / underline / links)
   const commitRichField = (field, html) => {
     const cleanedValue = sanitizeHtml(html);
-
-    setDraftResume((prev) => ({
-      ...prev,
-      [field]: cleanedValue,
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      [field]: cleanedValue,
-    }));
+    setCurrResume((prev) => ({ ...prev, [field]: cleanedValue }));
   };
 
   const commitExperienceField = (jobIndex, field, html) => {
     const cleanedValue = sanitizeHtml(html);
-
-    setDraftResume((prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex ? { ...job, [field]: cleanedValue } : job,
-      ),
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex ? { ...job, [field]: cleanedValue } : job,
-      ),
-    }));
+    updateJob(jobIndex, (job) => ({ ...job, [field]: cleanedValue }));
   };
 
   const commitBullet = (jobIndex, bulletIndex, html) => {
     const cleanedValue = sanitizeHtml(html);
-
-    setDraftResume((prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex
-          ? {
-              ...job,
-              bullets: (job.bullets || []).map((bullet, i) =>
-                i === bulletIndex ? cleanedValue : bullet,
-              ),
-            }
-          : job,
-      ),
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      experience: prev.experience.map((job, index) =>
-        index === jobIndex
-          ? {
-              ...job,
-              bullets: (job.bullets || []).map((bullet, i) =>
-                i === bulletIndex ? cleanedValue : bullet,
-              ),
-            }
-          : job,
+    updateJob(jobIndex, (job) => ({
+      ...job,
+      bullets: (job.bullets || []).map((bullet, i) =>
+        i === bulletIndex ? cleanedValue : bullet,
       ),
     }));
   };
 
   const commitSkillCategory = (groupIndex, value) => {
     const cleanedValue = sanitizeText(value).replace(/:/g, '');
-
-    setDraftResume((prev) => ({
-      ...prev,
-      skills: prev.skills.map((group, index) =>
-        index === groupIndex ? { ...group, category: cleanedValue } : group,
-      ),
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      skills: prev.skills.map((group, index) =>
-        index === groupIndex ? { ...group, category: cleanedValue } : group,
-      ),
+    updateSkillGroup(groupIndex, (group) => ({
+      ...group,
+      category: cleanedValue,
     }));
   };
 
@@ -256,32 +160,11 @@ export const ResumeParser = () => {
       .map((item) => item.trim())
       .filter(Boolean);
 
-    setDraftResume((prev) => ({
-      ...prev,
-      skills: prev.skills.map((group, index) =>
-        index === groupIndex ? { ...group, items: parsedItems } : group,
-      ),
-    }));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      skills: prev.skills.map((group, index) =>
-        index === groupIndex ? { ...group, items: parsedItems } : group,
-      ),
-    }));
+    updateSkillGroup(groupIndex, (group) => ({ ...group, items: parsedItems }));
   };
 
   const updateStyleSetting = (field, value) => {
     const nextValue = Math.max(8, Math.min(24, value));
-
-    setDraftResume((prev) => ({
-      ...prev,
-      styleSettings: {
-        ...defaultStyleSettings,
-        ...(prev?.styleSettings || {}),
-        [field]: nextValue,
-      },
-    }));
 
     setCurrResume((prev) => ({
       ...prev,
@@ -302,11 +185,6 @@ export const ResumeParser = () => {
   };
 
   const resetStyles = () => {
-    setDraftResume((prev) => ({
-      ...prev,
-      styleSettings: defaultStyleSettings,
-    }));
-
     setCurrResume((prev) => ({
       ...prev,
       styleSettings: defaultStyleSettings,
@@ -322,7 +200,7 @@ export const ResumeParser = () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, // ✅ THIS is what matters
+        Authorization: `Bearer ${token}`, //
       },
       body: JSON.stringify(currResume),
     });
@@ -376,6 +254,7 @@ export const ResumeParser = () => {
       jobLink: '',
     };
   };
+
   return (
     <section className="p-6">
       {showDeleteModal && (
@@ -417,50 +296,32 @@ export const ResumeParser = () => {
             <div className="flex justify-center">
               <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-[8.5in]">
                 <div className="grid gap-4 md:grid-cols-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Title
-                    </label>
-                    <input
-                      type="text"
-                      value={currResume.title || ''}
-                      onChange={(e) =>
-                        commitTopLevelField('title', e.target.value)
-                      }
-                      placeholder="Enter resume title..."
-                      className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:bg-white focus:ring-4 focus:ring-gray-900/5"
-                    />
-                  </div>
+                  <Input
+                    label="Title"
+                    name="title"
+                    value={currResume.title}
+                    onChange={setTopLevelField}
+                    onBlur={commitTopLevelField}
+                    placeholder="Enter resume title..."
+                  />
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Company
-                    </label>
-                    <input
-                      type="text"
-                      value={currResume.targetCompany || ''}
-                      onChange={(e) =>
-                        commitTopLevelField('targetCompany', e.target.value)
-                      }
-                      placeholder="Enter resume title..."
-                      className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:bg-white focus:ring-4 focus:ring-gray-900/5"
-                    />
-                  </div>
+                  <Input
+                    label="Company"
+                    name="targetCompany"
+                    value={currResume.targetCompany}
+                    onChange={setTopLevelField}
+                    onBlur={commitTopLevelField}
+                    placeholder="Enter company name..."
+                  />
 
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Job Link
-                    </label>
-                    <input
-                      type="text"
-                      value={currResume.jobLink || ''}
-                      onChange={(e) =>
-                        commitTopLevelField('targetCompany', e.target.value)
-                      }
-                      placeholder="Paste job link..."
-                      className="w-full rounded-xl border border-gray-300 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-gray-900 focus:bg-white focus:ring-4 focus:ring-gray-900/5"
-                    />
-                  </div>
+                  <Input
+                    label="Job Link"
+                    name="jobLink"
+                    value={currResume.jobLink}
+                    onChange={setTopLevelField}
+                    onBlur={commitTopLevelField}
+                    placeholder="Paste job link..."
+                  />
                 </div>
               </div>
             </div>
@@ -477,77 +338,27 @@ export const ResumeParser = () => {
                 }}
               >
                 <header className="border-b border-gray-300 pb-2 text-center">
-                  <h1
-                    key="resume-name"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.nameSize}px` }}
-                    className={`font-bold tracking-wide whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'name',
-                    )}`}
-                    onFocus={() => setActiveEditor('name')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitTopLevelField(
-                        'name',
-                        e.currentTarget.textContent || '',
-                      )
-                    }
-                  >
-                    {draftResume?.name || ''}
-                  </h1>
-
-                  <p
-                    key="resume-header"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize + 1}px` }}
-                    className={`leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'header',
-                    )}`}
-                    onFocus={() => setActiveEditor('header')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('header', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.header)}
+                  <EditableField
+                    as="h1"
+                    rich={false}
+                    editable={showEdit}
+                    value={currResume?.name}
+                    onCommit={(text) => commitTopLevelField('name', text)}
+                    fontSize={styleSettings.nameSize}
+                    className="font-bold tracking-wide"
                   />
 
-                  <p
-                    key="resume-contact"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize + 1}px` }}
-                    className={`leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'contact',
-                    )}`}
-                    onFocus={() => setActiveEditor('contact')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('contact', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.contact)}
-                  />
-
-                  <p
-                    key="resume-portfolio"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize + 1}px` }}
-                    className={`leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'portfolio',
-                    )}`}
-                    onFocus={() => setActiveEditor('portfolio')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('portfolio', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.portfolio)}
-                  />
+                  {['header', 'contact', 'portfolio'].map((field) => (
+                    <EditableField
+                      key={field}
+                      as="p"
+                      editable={showEdit}
+                      value={currResume?.[field]}
+                      onCommit={(html) => commitRichField(field, html)}
+                      fontSize={styleSettings.bodySize + 1}
+                      className="leading-[1.3]"
+                    />
+                  ))}
                 </header>
 
                 <section className="mt-1.5">
@@ -557,21 +368,14 @@ export const ResumeParser = () => {
                   >
                     Summary
                   </h2>
-                  <div
-                    key="resume-summary"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize}px` }}
-                    className={`leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'summary',
-                    )}`}
-                    onFocus={() => setActiveEditor('summary')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('summary', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.summary)}
+
+                  <EditableField
+                    as="div"
+                    editable={showEdit}
+                    value={currResume?.summary}
+                    onCommit={(html) => commitRichField('summary', html)}
+                    fontSize={styleSettings.bodySize}
+                    className="leading-[1.3]"
                   />
                 </section>
 
@@ -584,57 +388,30 @@ export const ResumeParser = () => {
                   </h2>
 
                   <div className="space-y-[2px]">
-                    {draftResume?.skills?.length
-                      ? draftResume.skills.map((skillGroup, index) => (
-                          <p
-                            key={`skill-group-${index}`}
-                            style={{ fontSize: `${styleSettings.bodySize}px` }}
-                            className="leading-[1.3]"
-                          >
-                            <span
-                              contentEditable={showEdit}
-                              suppressContentEditableWarning
-                              spellCheck={false}
-                              className={`font-semibold whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                `skill-category-${index}`,
-                              )}`}
-                              onFocus={() =>
-                                setActiveEditor(`skill-category-${index}`)
-                              }
-                              onKeyDown={handlePlainTextKeyDown}
-                              onBlur={(e) =>
-                                commitSkillCategory(
-                                  index,
-                                  e.currentTarget.textContent || '',
-                                )
-                              }
-                            >
-                              {skillGroup.category || ''}
-                            </span>
-                            :{' '}
-                            <span
-                              contentEditable={showEdit}
-                              suppressContentEditableWarning
-                              spellCheck={false}
-                              className={`whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                `skill-items-${index}`,
-                              )}`}
-                              onFocus={() =>
-                                setActiveEditor(`skill-items-${index}`)
-                              }
-                              onKeyDown={handlePlainTextKeyDown}
-                              onBlur={(e) =>
-                                commitSkillItems(
-                                  index,
-                                  e.currentTarget.textContent || '',
-                                )
-                              }
-                            >
-                              {skillGroup.items?.join(', ') || ''}
-                            </span>
-                          </p>
-                        ))
-                      : null}
+                    {currResume?.skills?.map((skillGroup, index) => (
+                      <p
+                        key={`skill-group-${index}`}
+                        style={{ fontSize: `${styleSettings.bodySize}px` }}
+                        className="leading-[1.3]"
+                      >
+                        <EditableField
+                          as="span"
+                          rich={false}
+                          editable={showEdit}
+                          value={skillGroup.category}
+                          onCommit={(text) => commitSkillCategory(index, text)}
+                          className="font-semibold"
+                        />
+                        :{' '}
+                        <EditableField
+                          as="span"
+                          rich={false}
+                          editable={showEdit}
+                          value={skillGroup.items?.join(', ')}
+                          onCommit={(text) => commitSkillItems(index, text)}
+                        />
+                      </p>
+                    ))}
                   </div>
                 </section>
 
@@ -647,162 +424,100 @@ export const ResumeParser = () => {
                   </h2>
 
                   <div className="space-y-2">
-                    {draftResume?.experience?.length
-                      ? draftResume.experience.map((job, index) => (
-                          <div key={`experience-${index}`} className="relative">
-                            <div className="flex items-start justify-between gap-4">
-                              <p
-                                contentEditable={showEdit}
-                                suppressContentEditableWarning
-                                spellCheck={false}
-                                style={{
-                                  fontSize: `${styleSettings.bodySize}px`,
-                                }}
-                                className={`font-bold leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                  `job-company-${index}`,
-                                )}`}
-                                onFocus={() =>
-                                  setActiveEditor(`job-company-${index}`)
-                                }
-                                onKeyDown={handlePlainTextKeyDown}
-                                onBlur={(e) =>
-                                  commitExperienceField(
-                                    index,
-                                    'company',
-                                    e.currentTarget.innerHTML,
-                                  )
-                                }
-                                dangerouslySetInnerHTML={asHtml(job?.company)}
-                              />
+                    {currResume?.experience?.map((job, index) => (
+                      <div
+                        key={`experience-${index}`}
+                        className="relative"
+                        style={{ fontSize: `${styleSettings.bodySize}px` }}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <EditableField
+                            editable={showEdit}
+                            value={job.company}
+                            onCommit={(html) =>
+                              commitExperienceField(index, 'company', html)
+                            }
+                            className="font-bold leading-[1.3]"
+                          />
 
-                              <p
-                                contentEditable={showEdit}
-                                suppressContentEditableWarning
-                                spellCheck={false}
-                                style={{
-                                  fontSize: `${styleSettings.bodySize}px`,
-                                }}
-                                className={`font-bold leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                  `job-date-${index}`,
-                                )}`}
-                                onFocus={() =>
-                                  setActiveEditor(`job-date-${index}`)
-                                }
-                                onKeyDown={handlePlainTextKeyDown}
-                                onBlur={(e) =>
-                                  commitExperienceField(
-                                    index,
-                                    'date',
-                                    e.currentTarget.innerHTML,
-                                  )
-                                }
-                                dangerouslySetInnerHTML={asHtml(job?.date)}
-                              />
-                            </div>
+                          <EditableField
+                            editable={showEdit}
+                            value={job.date}
+                            onCommit={(html) =>
+                              commitExperienceField(index, 'date', html)
+                            }
+                            className="font-bold leading-[1.3]"
+                          />
+                        </div>
 
-                            <p
-                              contentEditable={showEdit}
-                              suppressContentEditableWarning
-                              spellCheck={false}
-                              style={{
-                                fontSize: `${styleSettings.bodySize}px`,
-                              }}
-                              className={`italic leading-tight whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                `job-role-${index}`,
-                              )}`}
-                              onFocus={() =>
-                                setActiveEditor(`job-role-${index}`)
-                              }
-                              onKeyDown={handlePlainTextKeyDown}
-                              onBlur={(e) =>
-                                commitExperienceField(
-                                  index,
-                                  'role',
-                                  e.currentTarget.innerHTML,
-                                )
-                              }
-                              dangerouslySetInnerHTML={asHtml(job?.role)}
-                            />
+                        <EditableField
+                          editable={showEdit}
+                          value={job.role}
+                          onCommit={(html) =>
+                            commitExperienceField(index, 'role', html)
+                          }
+                          className="italic leading-tight"
+                        />
 
-                            <ul
-                              style={{
-                                fontSize: `${styleSettings.bodySize}px`,
-                              }}
-                              className="mt-[2px] list-disc pl-4 leading-[1.3]"
+                        <ul className="mt-[2px] list-disc pl-4 leading-[1.3]">
+                          {job.bullets?.map((bullet, bulletIndex) => (
+                            <li
+                              key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
+                              className="group relative"
                             >
-                              {job?.bullets?.length
-                                ? job.bullets.map((bullet, bulletIndex) => (
-                                    <li
-                                      key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
-                                      className="group relative"
-                                    >
-                                      <span
-                                        contentEditable={showEdit}
-                                        suppressContentEditableWarning
-                                        spellCheck={false}
-                                        className={`block whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                                          `job-bullet-${index}-${bulletIndex}`,
-                                        )}`}
-                                        onFocus={() =>
-                                          setActiveEditor(
-                                            `job-bullet-${index}-${bulletIndex}`,
-                                          )
-                                        }
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            e.preventDefault();
-                                            addBulletToJob(index);
-                                          }
+                              <EditableField
+                                as="span"
+                                editable={showEdit}
+                                value={bullet}
+                                onCommit={(html) =>
+                                  commitBullet(index, bulletIndex, html)
+                                }
+                                className="block"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    addBulletToJob(index);
+                                  }
 
-                                          if (
-                                            e.key === 'Backspace' &&
-                                            !e.currentTarget.textContent.trim()
-                                          ) {
-                                            e.preventDefault();
-                                            removeBullet(index, bulletIndex);
-                                          }
-                                        }}
-                                        onBlur={(e) =>
-                                          commitBullet(
-                                            index,
-                                            bulletIndex,
-                                            e.currentTarget.innerHTML,
-                                          )
-                                        }
-                                        dangerouslySetInnerHTML={asHtml(bullet)}
-                                      />
+                                  if (
+                                    e.key === 'Backspace' &&
+                                    !e.currentTarget.textContent.trim()
+                                  ) {
+                                    e.preventDefault();
+                                    removeBullet(index, bulletIndex);
+                                  }
+                                }}
+                              />
 
-                                      {showEdit && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            removeBullet(index, bulletIndex)
-                                          }
-                                          className="absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
-                                          aria-label="Remove bullet"
-                                        >
-                                          ✕
-                                        </button>
-                                      )}
-                                    </li>
-                                  ))
-                                : null}
-                            </ul>
+                              {showEdit && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeBullet(index, bulletIndex)
+                                  }
+                                  className="absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+                                  aria-label="Remove bullet"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
 
-                            {showEdit && (
-                              <button
-                                type="button"
-                                onClick={() => addBulletToJob(index)}
-                                title="Add bullet"
-                                aria-label="Add bullet"
-                                className="absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                              >
-                                +
-                              </button>
-                            )}
-                          </div>
-                        ))
-                      : null}
+                        {showEdit && (
+                          <button
+                            type="button"
+                            onClick={() => addBulletToJob(index)}
+                            title="Add bullet"
+                            aria-label="Add bullet"
+                            className="absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </section>
 
@@ -814,80 +529,35 @@ export const ResumeParser = () => {
                     Education
                   </h2>
 
-                  <div className="flex justify-between gap-4">
-                    <p
-                      key="education-name"
-                      contentEditable={showEdit}
-                      suppressContentEditableWarning
-                      spellCheck={false}
-                      style={{ fontSize: `${styleSettings.bodySize}px` }}
-                      className={`font-bold leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                        'education',
-                      )}`}
-                      onFocus={() => setActiveEditor('education')}
-                      onKeyDown={handlePlainTextKeyDown}
-                      onBlur={(e) =>
-                        commitRichField('education', e.currentTarget.innerHTML)
-                      }
-                      dangerouslySetInnerHTML={asHtml(draftResume?.education)}
-                    />
+                  <div style={{ fontSize: `${styleSettings.bodySize}px` }}>
+                    <div className="flex justify-between gap-4">
+                      <EditableField
+                        editable={showEdit}
+                        value={currResume?.education}
+                        onCommit={(html) => commitRichField('education', html)}
+                        className="font-bold leading-[1.3]"
+                      />
 
-                    <p
-                      key="education-location"
-                      contentEditable={showEdit}
-                      suppressContentEditableWarning
-                      spellCheck={false}
-                      style={{ fontSize: `${styleSettings.bodySize}px` }}
-                      className={`font-bold leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                        'edu_location',
-                      )}`}
-                      onFocus={() => setActiveEditor('edu_location')}
-                      onKeyDown={handlePlainTextKeyDown}
-                      onBlur={(e) =>
-                        commitRichField(
-                          'edu_location',
-                          e.currentTarget.innerHTML,
-                        )
-                      }
-                      dangerouslySetInnerHTML={asHtml(
-                        draftResume?.edu_location,
-                      )}
-                    />
+                      <EditableField
+                        editable={showEdit}
+                        value={currResume?.edu_location}
+                        onCommit={(html) =>
+                          commitRichField('edu_location', html)
+                        }
+                        className="font-bold leading-[1.3]"
+                      />
+                    </div>
+
+                    {['edu_desc', 'edu_honors'].map((field) => (
+                      <EditableField
+                        key={field}
+                        editable={showEdit}
+                        value={currResume?.[field]}
+                        onCommit={(html) => commitRichField(field, html)}
+                        className="italic leading-[1.3]"
+                      />
+                    ))}
                   </div>
-
-                  <p
-                    key="education-desc"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize}px` }}
-                    className={`italic leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'edu_desc',
-                    )}`}
-                    onFocus={() => setActiveEditor('edu_desc')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('edu_desc', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.edu_desc)}
-                  />
-
-                  <p
-                    key="education-honors"
-                    contentEditable={showEdit}
-                    suppressContentEditableWarning
-                    spellCheck={false}
-                    style={{ fontSize: `${styleSettings.bodySize}px` }}
-                    className={`italic leading-[1.3] whitespace-pre-wrap break-words ${editableClass} ${activeHighlight(
-                      'edu_honors',
-                    )}`}
-                    onFocus={() => setActiveEditor('edu_honors')}
-                    onKeyDown={handlePlainTextKeyDown}
-                    onBlur={(e) =>
-                      commitRichField('edu_honors', e.currentTarget.innerHTML)
-                    }
-                    dangerouslySetInnerHTML={asHtml(draftResume?.edu_honors)}
-                  />
                 </section>
               </div>
               {/* end of resumeRef div */}
