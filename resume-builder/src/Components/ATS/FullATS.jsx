@@ -1,12 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/useAppContext';
+import { useUserContext } from '../../context/user/UserContext';
+import { useAtsContext } from '../../context/ats/AtsContext';
 import { getScoreStyles } from './helper';
 import { mapResumeToState } from '../../utils/helper';
 
 export const FullATS = () => {
+  const { allResumes = [], setCurrResume, setAllResumes } = useAppContext();
+
   const {
-    allResumes = [],
     analysisResult,
     selectedResumeId_ATS,
     setSelectedResumeId_ATS,
@@ -14,10 +17,9 @@ export const FullATS = () => {
     setJobLink_ATS,
     handleAnalyze,
     isAnalyzing,
-    setUserPane,
-    setCurrResume,
-    setAllResumes,
-  } = useAppContext();
+  } = useAtsContext();
+
+  const { setUserPane } = useUserContext();
 
   const [isImproving, setIsImproving] = useState(false);
 

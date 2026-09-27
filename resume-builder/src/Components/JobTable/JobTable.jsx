@@ -1,4 +1,7 @@
 import { useAppContext } from '../../context/useAppContext';
+import { useUserContext } from '../../context/user/UserContext';
+import { useJobAppsContext } from '../../context/jobApps/JobAppsContext';
+
 import { useAuth } from '@clerk/clerk-react';
 import { formatResumeForClient } from '../../utils/helper';
 import { FaTrashCan } from 'react-icons/fa6';
@@ -14,14 +17,11 @@ import { MdOutlineStickyNote2 } from 'react-icons/md';
 import { AddNoteModal } from './AddNoteModal';
 
 export const JobTable = () => {
-  const {
-    jobApps,
-    setJobApps,
-    allResumes,
-    setCurrResume,
-    setUserPane,
-    currResume,
-  } = useAppContext();
+  const { allResumes, setCurrResume, currResume } = useAppContext();
+
+  const { jobApps, setJobApps } = useJobAppsContext();
+
+  const { setUserPane } = useUserContext();
 
   const { getToken } = useAuth();
 

@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '../context/useAppContext';
+import { useJobAppsContext } from '../context/jobApps/JobAppsContext';
+
 import { JobTable } from './JobTable/JobTable';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { seedResume } from '../utils/helper';
@@ -8,12 +10,10 @@ import { UploadModal } from './UploadModal';
 
 export const Dashboard = () => {
   const { user } = useUser();
-  const {
-    allResumes = [],
-    createResume,
-    jobApps = [],
-    setCurrResume,
-  } = useAppContext();
+  const { allResumes = [], createResume, setCurrResume } = useAppContext();
+
+  const { jobApps = [] } = useJobAppsContext();
+
   const { getToken } = useAuth();
 
   const [isUploadModal, setIsUploadModal] = useState(false);

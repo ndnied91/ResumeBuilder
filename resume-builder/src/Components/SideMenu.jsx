@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { RiMenuFold2Fill, RiMenuFoldFill } from 'react-icons/ri';
-import { useAppContext } from '../context/useAppContext';
+import { useUserContext } from '../context/user/UserContext';
 
 import { useClerk } from '@clerk/clerk-react';
 
@@ -8,8 +8,7 @@ const SideMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { signOut, user } = useClerk();
 
-  const { setUserPane, userPane } = useAppContext();
-  console.log(userPane);
+  const { setUserPane, userPane } = useUserContext();
 
   const handleSignOut = async () => {
     await signOut({ redirectUrl: '/' }); // Redirect to the home page after sign out

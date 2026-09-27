@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useAppContext } from '../../context/useAppContext';
+import { useJobAppsContext } from '../../context/jobApps/JobAppsContext';
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 
 export const AddJobModal = ({ setShowAddModal }) => {
-  const { setJobApps, allResumes } = useAppContext();
+  const { allResumes } = useAppContext();
+  const { setJobApps } = useJobAppsContext();
   const { getToken } = useAuth();
 
   const [jobApp, setJobApp] = useState({

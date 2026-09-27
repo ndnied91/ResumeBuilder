@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import FocusTrap from 'focus-trap-react';
-import { useAppContext } from '../../context/useAppContext';
+// import { useAppContext } from '../../context/useAppContext';
+import { useJobAppsContext } from '../../context/jobApps/JobAppsContext';
 import { useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
 
 export const AddNoteModal = ({ setShowAddNoteModal, selectedJob }) => {
   const { getToken } = useAuth();
-  const { setJobApps } = useAppContext();
+  // const { setJobApps } = useAppContext();
+  const { setJobApps } = useJobAppsContext();
 
   const [jobAppNotes, setJobAppNotes] = useState(selectedJob?.notes || '');
   const [isSaving, setIsSaving] = useState(false);

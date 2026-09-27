@@ -1,5 +1,8 @@
 import SideMenu from './SideMenu';
 import { useAppContext } from '../context/useAppContext';
+import { useUserContext } from '../context/user/UserContext';
+import { useJobAppsContext } from '../context/jobApps/JobAppsContext';
+
 import { GenerateResume } from './GenerateResume';
 import { Settings } from './Settings';
 import { useEffect } from 'react';
@@ -14,8 +17,10 @@ import { History } from './History';
 import { ResumeParser } from './Resume/ResumeParser';
 
 function App() {
-  const { userPane, getResumes, setUserIds, userIds, getJobApps } =
-    useAppContext();
+  const { getResumes } = useAppContext();
+  const { userPane, setUserIds, userIds } = useUserContext();
+  const { getJobApps } = useJobAppsContext();
+
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
 

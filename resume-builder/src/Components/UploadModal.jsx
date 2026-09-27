@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import FocusTrap from 'focus-trap-react';
 import { useAppContext } from '../context/useAppContext';
+import { useUserContext } from '../context/user/UserContext';
+
 import { FiUploadCloud, FiFileText, FiLink, FiTag } from 'react-icons/fi';
 import { mapResumeToState } from '../utils/helper';
 
 export const UploadModal = ({ setIsUploadModal }) => {
-  const { setCurrResume, setAllResumes, setUserPane } = useAppContext();
+  const { setCurrResume, setAllResumes } = useAppContext();
+  const { setUserPane } = useUserContext();
+
   const { getToken } = useAuth();
 
   const [resumeFile, setResumeFile] = useState(null);

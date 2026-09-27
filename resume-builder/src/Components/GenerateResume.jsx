@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppContext } from '../context/useAppContext';
+import { useUserContext } from '../context/user/UserContext';
 import { mapResumeToState } from '../utils/helper';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import toast from 'react-hot-toast';
@@ -12,10 +13,10 @@ export const GenerateResume = () => {
     currResume,
     setCurrResume,
     allResumes,
-    userIds,
     setAllResumes,
-    setUserPane,
   } = useAppContext();
+
+  const { userIds, setUserPane } = useUserContext();
 
   const { getToken, isSignedIn } = useAuth();
 

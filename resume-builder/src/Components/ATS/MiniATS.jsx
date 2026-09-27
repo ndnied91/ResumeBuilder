@@ -1,24 +1,26 @@
-import { useState } from 'react';
 import { useAppContext } from '../../context/useAppContext';
+import { useUserContext } from '../../context/user/UserContext';
+import { useAtsContext } from '../../context/ats/AtsContext';
+
 import { useAuth, useUser } from '@clerk/clerk-react';
-import toast from 'react-hot-toast';
+
 import { getScoreStyles } from './helper';
 
 export const MiniATS = () => {
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
+  const { allResumes = [] } = useAppContext();
+  const { setUserPane } = useUserContext();
+
   const {
-    allResumes = [],
-    setUserPane,
     analysisResult,
-    setAnalysisResult,
     selectedResumeId_ATS,
     setSelectedResumeId_ATS,
     jobLink_ATS,
     setJobLink_ATS,
     handleAnalyze,
     isAnalyzing,
-  } = useAppContext();
+  } = useAtsContext();
 
   const scoreStyles = analysisResult
     ? getScoreStyles(analysisResult?.result?.score)
