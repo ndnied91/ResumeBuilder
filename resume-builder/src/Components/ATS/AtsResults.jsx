@@ -1,9 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useAtsContext } from '../../context/ats/AtsContext';
 import { getScoreStyles } from './helper';
 
 const AtsResults = () => {
   const { analysisResult } = useAtsContext();
+
+  const [deselected, setDeselected] = useState([]);
+
+  // Reset to "all selected" whenever a new result comes in
+  useEffect(() => {
+    setDeselected([]);
+  }, [analysisResult]);
 
   const normalizedResult = useMemo(() => {
     if (!analysisResult) return null;
@@ -28,7 +35,19 @@ const AtsResults = () => {
     }
   }, [analysisResult]);
 
+  // All hooks are above this line; nothing below runs until there's a result
   if (!normalizedResult) return null;
+
+  const toggleRecommendation = (index) => {
+    setDeselected((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
+    );
+  };
+
+  const recommendations = normalizedResult.recommendations || [];
+  const selectedRecommendations = recommendations.filter(
+    (_, index) => !deselected.includes(index),
+  );
 
   const score = Number(normalizedResult.score ?? 0);
   const scoreStyles = getScoreStyles(score);
@@ -143,20 +162,36 @@ const AtsResults = () => {
               Recommendations
             </h3>
 
-            {normalizedResult.recommendations?.length ? (
-              <ol className="mt-4 space-y-3">
-                {normalizedResult.recommendations.map((item, index) => (
-                  <li
-                    key={index}
-                    className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-gray-700"
-                  >
-                    <span className="mr-2 font-semibold text-gray-900">
-                      {index + 1}.
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ol>
+            {recommendations.length ? (
+              <>
+                <ol className="mt-4 space-y-3">
+                  {recommendations.map((item, index) => (
+                    <li key={index}>
+                      <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-blue-50 px-4 py-3 text-sm text-gray-700 transition hover:bg-blue-100">
+                        <input
+                          type="checkbox"
+                          checked={!deselected.includes(index)}
+                          onChange={() => toggleRecommendation(index)}
+                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
+                        />
+                        <span>{item}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ol>
+
+                <button
+                  type="button"
+                  disabled={selectedRecommendations.length === 0}
+                  onClick={() => console.log('apply:', selectedRecommendations)}
+                  className="mt-4 w-full cursor-pointer rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+                >
+                  Apply {selectedRecommendations.length}{' '}
+                  {selectedRecommendations.length === 1
+                    ? 'suggestion'
+                    : 'suggestions'}
+                </button>
+              </>
             ) : (
               <p className="mt-4 text-sm text-gray-500">
                 No recommendations were returned.
