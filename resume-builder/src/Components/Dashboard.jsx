@@ -79,12 +79,11 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          {/* ATS Checker */}
-          <div className="xl:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <MiniATS />
-          </div>
+        {isUploadModal && <UploadModal setIsUploadModal={setIsUploadModal} />}
 
+        <JobTable />
+
+        <div className="mt-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
           {/* Quick Actions */}
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h3 className="mb-4 text-lg font-semibold text-gray-900">
@@ -105,10 +104,6 @@ export const Dashboard = () => {
             </div>
           </div>
         </div>
-
-        {isUploadModal && <UploadModal setIsUploadModal={setIsUploadModal} />}
-
-        <JobTable />
       </div>
     </div>
   );

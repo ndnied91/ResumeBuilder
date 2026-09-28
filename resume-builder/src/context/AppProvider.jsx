@@ -9,6 +9,10 @@ export function AppProvider({ children }) {
   const { getJobApps } = useJobAppsContext();
   const [resumeFile, setResumeFile] = useState(null);
   const [jobLink, setJobLink] = useState('');
+  const [resumeTitle, setResumeTitle] = useState('');
+
+  const [jobDescription, setJobDescription] = useState('');
+
   const [allResumes, setAllResumes] = useState([]);
   const [currResume, setCurrResume] = useState(blankResume);
 
@@ -80,14 +84,27 @@ export function AppProvider({ children }) {
       setResumeFile,
       jobLink,
       setJobLink,
+      jobDescription,
+      setJobDescription,
       currResume,
       setCurrResume,
       allResumes,
       setAllResumes,
       getResumes,
       createResume,
+      resumeTitle,
+      setResumeTitle,
     }),
-    [resumeFile, jobLink, currResume, allResumes, getResumes, createResume],
+    [
+      resumeFile,
+      jobLink,
+      jobDescription,
+      currResume,
+      allResumes,
+      getResumes,
+      createResume,
+      resumeTitle,
+    ],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

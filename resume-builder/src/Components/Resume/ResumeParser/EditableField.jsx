@@ -34,7 +34,7 @@ const EditableField = ({
       suppressContentEditableWarning
       spellCheck={false}
       style={fontSize ? { fontSize: `${fontSize}px` } : undefined}
-      className={`whitespace-pre-wrap break-words ${editable ? EDITABLE_CLASS : ''} ${className}`}
+      className={`whitespace-pre-wrap wrap-break-word ${editable ? EDITABLE_CLASS : ''} ${className}`}
       onKeyDown={onKeyDown}
       onBlur={(e) =>
         onCommit(

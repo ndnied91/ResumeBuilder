@@ -10,7 +10,7 @@ import { Dashboard } from './Dashboard';
 import { HomePage } from './HomePage';
 import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';
-import { FullATS } from './ATS/FullATS';
+import { AtsInsights } from './ATS/AtsInsights';
 
 import { History } from './History';
 
@@ -63,12 +63,11 @@ function App() {
 
   const panes = {
     generate: <GenerateResume />,
-    // resume: <Resume />,
     settings: <Settings />,
     dashboard: <Dashboard />,
-    ats: <FullATS />,
+    ats: <AtsInsights />,
     history: <History />,
-    resumeParser: <ResumeParser />,
+    edit: <ResumeParser />,
   };
 
   return (

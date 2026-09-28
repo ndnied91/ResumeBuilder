@@ -2,18 +2,19 @@ import { useCallback, useMemo, useState } from 'react';
 import { AtsContext } from './AtsContext';
 
 export function AtsProvider({ children }) {
-  const [analysisResult, setAnalysisResult] = useState({});
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [selectedResumeId_ATS, setSelectedResumeId_ATS] = useState('');
   const [jobLink_ATS, setJobLink_ATS] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [jobDescription_ATS, setJobDescription_ATS] = useState('');
 
   const handleAnalyze = useCallback(
-    async (getToken) => {
-      if (!selectedResumeId_ATS || !jobLink_ATS.trim()) return;
+    async (getToken, jobDescription) => {
+      if (!selectedResumeId_ATS || !jobDescription?.trim()) return;
+
+      setIsAnalyzing(true);
 
       try {
-        setIsAnalyzing(true);
-
         const token = await getToken();
         const res = await fetch('/api/ats', {
           method: 'POST',
@@ -23,11 +24,12 @@ export function AtsProvider({ children }) {
           },
           body: JSON.stringify({
             selectedResumeId_ATS,
-            jobLink_ATS,
+            jobDescription,
           }),
         });
 
         const data = await res.json();
+        console.log(data);
 
         if (!res.ok) {
           console.error('ATS analysis failed:', data.message);
@@ -41,7 +43,7 @@ export function AtsProvider({ children }) {
         setIsAnalyzing(false);
       }
     },
-    [selectedResumeId_ATS, jobLink_ATS],
+    [selectedResumeId_ATS],
   );
 
   const value = useMemo(
@@ -55,6 +57,8 @@ export function AtsProvider({ children }) {
       isAnalyzing,
       setIsAnalyzing,
       handleAnalyze,
+      jobDescription_ATS,
+      setJobDescription_ATS,
     }),
     [
       analysisResult,
@@ -62,6 +66,7 @@ export function AtsProvider({ children }) {
       jobLink_ATS,
       isAnalyzing,
       handleAnalyze,
+      jobDescription_ATS,
     ],
   );
 

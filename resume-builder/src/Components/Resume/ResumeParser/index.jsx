@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
-import { FaRegFilePdf, FaTrashCan } from 'react-icons/fa6';
-import { FaRegCopy } from 'react-icons/fa';
-import { IoMdAdd } from 'react-icons/io';
 import toast from 'react-hot-toast';
 import { useUser, useAuth } from '@clerk/clerk-react';
-import DOMPurify from 'dompurify';
 
 import { useAppContext } from '../../../context/useAppContext';
 import { useReactToPrint } from 'react-to-print';
@@ -21,8 +16,14 @@ import { sanitizeHtml, sanitizeText } from './utils';
 
 const PAGE_HEIGHT_PX = 11 * 96; // 11in at 96 CSS px per inch
 
+const styleSettings = {
+  nameSize: 15,
+  headingSize: 15,
+  bodySize: 12,
+};
+
 export const ResumeParser = () => {
-  const { currResume, setCurrResume, allResumes, setAllResumes, createResume } =
+  const { currResume, setCurrResume, setAllResumes, createResume } =
     useAppContext();
 
   const resumeRef = useRef(null);
@@ -38,6 +39,9 @@ export const ResumeParser = () => {
 
   const [contentHeight, setContentHeight] = useState(0);
 
+  const hasResume = currResume.resumeId !== null;
+
+  // Re-run once the resume is loaded, since the resume div doesn't exist while loading
   useEffect(() => {
     const el = resumeRef.current;
     if (!el) return;
@@ -48,13 +52,7 @@ export const ResumeParser = () => {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
-
-  const defaultStyleSettings = {
-    nameSize: 15,
-    headingSize: 15,
-    bodySize: 12,
-  };
+  }, [hasResume]);
 
   const handlePrint = useReactToPrint({
     contentRef: resumeRef,
@@ -67,18 +65,10 @@ export const ResumeParser = () => {
     handlePrint();
   };
 
-  const styleSettings = {
-    ...defaultStyleSettings,
-  };
-
   const pageCount = Math.max(1, Math.ceil(contentHeight / PAGE_HEIGHT_PX));
   const overflowPx = contentHeight - PAGE_HEIGHT_PX;
   const isOverflowing = overflowPx > 1;
   const overflowLines = Math.ceil(overflowPx / (styleSettings.bodySize * 1.3));
-
-  const editableClass = showEdit
-    ? 'rounded outline-none transition hover:bg-yellow-50 focus:bg-yellow-50'
-    : '';
 
   // Helper: change one job
   const updateJob = (jobIndex, updater) => {
@@ -128,7 +118,6 @@ export const ResumeParser = () => {
   // Rich text fields (keep bold / italic / underline / links)
   const commitRichField = (field, html) => {
     const cleanedValue = sanitizeHtml(html);
-    console.log('commit', field, cleanedValue);
     setCurrResume((prev) => ({ ...prev, [field]: cleanedValue }));
   };
 
@@ -164,34 +153,6 @@ export const ResumeParser = () => {
     updateSkillGroup(groupIndex, (group) => ({ ...group, items: parsedItems }));
   };
 
-  const updateStyleSetting = (field, value) => {
-    const nextValue = Math.max(8, Math.min(24, value));
-
-    setCurrResume((prev) => ({
-      ...prev,
-      styleSettings: {
-        ...defaultStyleSettings,
-        ...(prev?.styleSettings || {}),
-        [field]: nextValue,
-      },
-    }));
-  };
-
-  const incrementStyle = (field) => {
-    updateStyleSetting(field, styleSettings[field] + 1);
-  };
-
-  const decrementStyle = (field) => {
-    updateStyleSetting(field, styleSettings[field] - 1);
-  };
-
-  const resetStyles = () => {
-    setCurrResume((prev) => ({
-      ...prev,
-      styleSettings: defaultStyleSettings,
-    }));
-  };
-
   const updateResume = async () => {
     if (!isSignedIn || !user) return;
 
@@ -201,7 +162,7 @@ export const ResumeParser = () => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`, //
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(currResume),
     });
@@ -232,7 +193,6 @@ export const ResumeParser = () => {
     setIsDuplicating(true);
     try {
       const copy = duplicateResume(currResume);
-      console.log(copy);
       const saved = await createResume(getToken, copy);
 
       if (!saved) return;
@@ -253,12 +213,9 @@ export const ResumeParser = () => {
       ...rest,
       targetCompany: `${resume.targetCompany || 'Untitled'} (copy)`,
       jobLink: '',
+      jobDescription: '',
     };
   };
-
-  useEffect(() => {
-    console.log('currResume.summary is now:', currResume?.summary);
-  }, [currResume]);
 
   return (
     <section className="p-6">
@@ -290,297 +247,324 @@ export const ResumeParser = () => {
           isSaving={isSaving}
           updateResume={updateResume}
           setShowDeleteModal={setShowDeleteModal}
-          styleSettings={styleSettings}
-          incrementStyle={incrementStyle}
-          decrementStyle={decrementStyle}
-          resetStyles={resetStyles}
         />
 
-        <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4 ">
-          {showEdit && (
-            <div className="flex justify-center">
-              <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-204">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Input
-                    label="Title"
-                    name="title"
-                    value={currResume.title}
-                    onChange={setTopLevelField}
-                    onBlur={commitTopLevelField}
-                    placeholder="Enter resume title..."
-                  />
+        {!hasResume ? (
+          <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center gap-3">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+            <p className="text-sm font-medium text-gray-500">
+              Loading resume...
+            </p>
+          </div>
+        ) : (
+          <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4 ">
+            {showEdit && (
+              <div className="flex justify-center">
+                <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-204">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Input
+                      label="Title"
+                      name="title"
+                      value={currResume.title}
+                      onChange={setTopLevelField}
+                      onBlur={commitTopLevelField}
+                      placeholder="Enter resume title..."
+                    />
 
-                  <Input
-                    label="Company"
-                    name="targetCompany"
-                    value={currResume.targetCompany}
-                    onChange={setTopLevelField}
-                    onBlur={commitTopLevelField}
-                    placeholder="Enter company name..."
-                  />
+                    <Input
+                      label="Company"
+                      name="targetCompany"
+                      value={currResume.targetCompany}
+                      onChange={setTopLevelField}
+                      onBlur={commitTopLevelField}
+                      placeholder="Enter company name..."
+                    />
 
-                  <Input
-                    label="Job Link"
-                    name="jobLink"
-                    value={currResume.jobLink}
-                    onChange={setTopLevelField}
-                    onBlur={commitTopLevelField}
-                    placeholder="Paste job link..."
-                  />
+                    <Input
+                      label="Job Link"
+                      name="jobLink"
+                      value={currResume.jobLink}
+                      onChange={setTopLevelField}
+                      onBlur={commitTopLevelField}
+                      placeholder="Paste job link..."
+                    />
+
+                    <div className="text-xs text-gray-500">
+                      <p>
+                        {currResume.createdAt &&
+                          `Created ${new Date(currResume.createdAt).toLocaleString()}`}
+                      </p>
+
+                      <p>
+                        {currResume.updatedAt &&
+                          `Last saved ${new Date(currResume.updatedAt).toLocaleString()}`}
+                      </p>
+                    </div>
+                    {isOverflowing && (
+                      <span className="flex h-11 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700">
+                        ~{overflowLines}{' '}
+                        {overflowLines === 1 ? 'line' : 'lines'} over 1 page
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* end of title  */}
-          <div className="flex min-w-0 justify-center">
-            <div className="relative w-full max-w-204">
-              <div
-                ref={resumeRef}
-                className="w-full min-h-264 bg-white px-12 py-8 text-black print:min-h-0 [&_a]:underline"
-                style={{
-                  fontFamily: 'Calibri, Arial, Helvetica, sans-serif',
-                }}
-              >
-                <header className="border-b border-gray-300 pb-2 text-center">
-                  <EditableField
-                    as="h1"
-                    rich={false}
-                    editable={showEdit}
-                    value={currResume?.name}
-                    onCommit={(text) => commitTopLevelField('name', text)}
-                    fontSize={styleSettings.nameSize}
-                    className="font-bold tracking-wide"
-                  />
-
-                  {['header', 'contact', 'portfolio'].map((field) => (
+            {/* end of title  */}
+            <div className="flex min-w-0 justify-center">
+              <div className="relative w-full max-w-204">
+                <div
+                  ref={resumeRef}
+                  className="w-full min-h-264 bg-white px-12 py-8 text-black print:min-h-0 [&_a]:underline"
+                  style={{
+                    fontFamily: 'Calibri, Arial, Helvetica, sans-serif',
+                  }}
+                >
+                  <header className="border-b border-gray-300 pb-2 text-center">
                     <EditableField
-                      key={field}
-                      as="p"
+                      as="h1"
+                      rich={false}
                       editable={showEdit}
-                      value={currResume?.[field]}
-                      onCommit={(html) => commitRichField(field, html)}
-                      fontSize={styleSettings.bodySize + 1}
-                      className="leading-[1.3]"
+                      value={currResume?.name}
+                      onCommit={(text) => commitTopLevelField('name', text)}
+                      fontSize={styleSettings.nameSize}
+                      className="font-bold tracking-wide"
                     />
-                  ))}
-                </header>
 
-                <section className="mt-1.5">
-                  <h2
-                    className="font-bold tracking-wider"
-                    style={{ fontSize: `${styleSettings.headingSize}px` }}
-                  >
-                    Summary
-                  </h2>
-
-                  <EditableField
-                    as="div"
-                    editable={showEdit}
-                    value={currResume?.summary}
-                    onCommit={(html) => commitRichField('summary', html)}
-                    fontSize={styleSettings.bodySize}
-                    className="leading-[1.3]"
-                  />
-                </section>
-
-                <section className="mt-1.5">
-                  <h2
-                    className="font-bold tracking-wider"
-                    style={{ fontSize: `${styleSettings.headingSize}px` }}
-                  >
-                    Technical Skills
-                  </h2>
-
-                  <div className="space-y-0.5">
-                    {currResume?.skills?.map((skillGroup, index) => (
-                      <p
-                        key={`skill-group-${index}`}
-                        style={{ fontSize: `${styleSettings.bodySize}px` }}
-                        className="leading-[1.3]"
-                      >
-                        <EditableField
-                          as="span"
-                          rich={false}
-                          editable={showEdit}
-                          value={skillGroup.category}
-                          onCommit={(text) => commitSkillCategory(index, text)}
-                          className="font-semibold"
-                        />
-                        :{' '}
-                        <EditableField
-                          as="span"
-                          rich={false}
-                          editable={showEdit}
-                          value={skillGroup.items?.join(', ')}
-                          onCommit={(text) => commitSkillItems(index, text)}
-                        />
-                      </p>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="mt-1.5">
-                  <h2
-                    className="font-bold tracking-wider"
-                    style={{ fontSize: `${styleSettings.headingSize}px` }}
-                  >
-                    Work Experience
-                  </h2>
-
-                  <div className="space-y-2">
-                    {currResume?.experience?.map((job, index) => (
-                      <div
-                        key={`experience-${index}`}
-                        className="relative"
-                        style={{ fontSize: `${styleSettings.bodySize}px` }}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <EditableField
-                            editable={showEdit}
-                            value={job.company}
-                            onCommit={(html) =>
-                              commitExperienceField(index, 'company', html)
-                            }
-                            className="font-bold leading-[1.3]"
-                          />
-
-                          <EditableField
-                            editable={showEdit}
-                            value={job.date}
-                            onCommit={(html) =>
-                              commitExperienceField(index, 'date', html)
-                            }
-                            className="font-bold leading-[1.3]"
-                          />
-                        </div>
-
-                        <EditableField
-                          editable={showEdit}
-                          value={job.role}
-                          onCommit={(html) =>
-                            commitExperienceField(index, 'role', html)
-                          }
-                          className="italic leading-tight"
-                        />
-
-                        <ul className="mt-0.5 list-disc pl-4 leading-[1.3]">
-                          {job.bullets?.map((bullet, bulletIndex) => (
-                            <li
-                              key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
-                              className="group relative"
-                            >
-                              <EditableField
-                                as="span"
-                                editable={showEdit}
-                                value={bullet}
-                                onCommit={(html) =>
-                                  commitBullet(index, bulletIndex, html)
-                                }
-                                className="block"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    addBulletToJob(index);
-                                  }
-
-                                  if (
-                                    e.key === 'Backspace' &&
-                                    !e.currentTarget.textContent.trim()
-                                  ) {
-                                    e.preventDefault();
-                                    removeBullet(index, bulletIndex);
-                                  }
-                                }}
-                              />
-
-                              {showEdit && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeBullet(index, bulletIndex)
-                                  }
-                                  className="absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
-                                  aria-label="Remove bullet"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-
-                        {showEdit && (
-                          <button
-                            type="button"
-                            onClick={() => addBulletToJob(index)}
-                            title="Add bullet"
-                            aria-label="Add bullet"
-                            className="absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                          >
-                            +
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="mt-1">
-                  <h2
-                    className="font-bold tracking-wider"
-                    style={{ fontSize: `${styleSettings.headingSize}px` }}
-                  >
-                    Education
-                  </h2>
-
-                  <div style={{ fontSize: `${styleSettings.bodySize}px` }}>
-                    <div className="flex justify-between gap-4">
-                      <EditableField
-                        editable={showEdit}
-                        value={currResume?.education}
-                        onCommit={(html) => commitRichField('education', html)}
-                        className="font-bold leading-[1.3]"
-                      />
-
-                      <EditableField
-                        editable={showEdit}
-                        value={currResume?.edu_location}
-                        onCommit={(html) =>
-                          commitRichField('edu_location', html)
-                        }
-                        className="font-bold leading-[1.3]"
-                      />
-                    </div>
-
-                    {['edu_desc', 'edu_honors'].map((field) => (
+                    {['header', 'contact', 'portfolio'].map((field) => (
                       <EditableField
                         key={field}
+                        as="p"
                         editable={showEdit}
                         value={currResume?.[field]}
                         onCommit={(html) => commitRichField(field, html)}
-                        className="italic leading-[1.3]"
+                        fontSize={styleSettings.bodySize + 1}
+                        className="leading-[1.3]"
                       />
                     ))}
-                  </div>
-                </section>
-              </div>
-              {/* end of resumeRef div */}
+                  </header>
 
-              {Array.from({ length: pageCount - 1 }, (_, i) => (
-                <div
-                  key={`page-break-${i}`}
-                  className="pointer-events-none absolute left-0 right-0 border-t-2 border-dashed border-red-400"
-                  style={{ top: (i + 1) * PAGE_HEIGHT_PX }}
-                >
-                  <span className="absolute -top-5 right-2 rounded bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
-                    Page {i + 2}
-                  </span>
+                  <section className="mt-1.5">
+                    <h2
+                      className="font-bold tracking-wider"
+                      style={{ fontSize: `${styleSettings.headingSize}px` }}
+                    >
+                      Summary
+                    </h2>
+
+                    <EditableField
+                      as="div"
+                      editable={showEdit}
+                      value={currResume?.summary}
+                      onCommit={(html) => commitRichField('summary', html)}
+                      fontSize={styleSettings.bodySize}
+                      className="leading-[1.3]"
+                    />
+                  </section>
+
+                  <section className="mt-1.5">
+                    <h2
+                      className="font-bold tracking-wider"
+                      style={{ fontSize: `${styleSettings.headingSize}px` }}
+                    >
+                      Technical Skills
+                    </h2>
+
+                    <div className="space-y-0.5">
+                      {currResume?.skills?.map((skillGroup, index) => (
+                        <p
+                          key={`skill-group-${index}`}
+                          style={{ fontSize: `${styleSettings.bodySize}px` }}
+                          className="leading-[1.3]"
+                        >
+                          <EditableField
+                            as="span"
+                            rich={false}
+                            editable={showEdit}
+                            value={skillGroup.category}
+                            onCommit={(text) =>
+                              commitSkillCategory(index, text)
+                            }
+                            className="font-semibold"
+                          />
+                          :{' '}
+                          <EditableField
+                            as="span"
+                            rich={false}
+                            editable={showEdit}
+                            value={skillGroup.items?.join(', ')}
+                            onCommit={(text) => commitSkillItems(index, text)}
+                          />
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-1.5">
+                    <h2
+                      className="font-bold tracking-wider"
+                      style={{ fontSize: `${styleSettings.headingSize}px` }}
+                    >
+                      Work Experience
+                    </h2>
+
+                    <div className="space-y-2">
+                      {currResume?.experience?.map((job, index) => (
+                        <div
+                          key={`experience-${index}`}
+                          className="relative"
+                          style={{ fontSize: `${styleSettings.bodySize}px` }}
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <EditableField
+                              editable={showEdit}
+                              value={job.company}
+                              onCommit={(html) =>
+                                commitExperienceField(index, 'company', html)
+                              }
+                              className="font-bold leading-[1.3]"
+                            />
+
+                            <EditableField
+                              editable={showEdit}
+                              value={job.date}
+                              onCommit={(html) =>
+                                commitExperienceField(index, 'date', html)
+                              }
+                              className="font-bold leading-[1.3]"
+                            />
+                          </div>
+
+                          <EditableField
+                            editable={showEdit}
+                            value={job.role}
+                            onCommit={(html) =>
+                              commitExperienceField(index, 'role', html)
+                            }
+                            className="italic leading-tight"
+                          />
+
+                          <ul className="mt-0.5 list-disc pl-4 leading-[1.3]">
+                            {job.bullets?.map((bullet, bulletIndex) => (
+                              <li
+                                key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
+                                className="group relative"
+                              >
+                                <EditableField
+                                  as="span"
+                                  editable={showEdit}
+                                  value={bullet}
+                                  onCommit={(html) =>
+                                    commitBullet(index, bulletIndex, html)
+                                  }
+                                  className="block"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      addBulletToJob(index);
+                                    }
+
+                                    if (
+                                      e.key === 'Backspace' &&
+                                      !e.currentTarget.textContent.trim()
+                                    ) {
+                                      e.preventDefault();
+                                      removeBullet(index, bulletIndex);
+                                    }
+                                  }}
+                                />
+
+                                {showEdit && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeBullet(index, bulletIndex)
+                                    }
+                                    className="absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
+                                    aria-label="Remove bullet"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {showEdit && (
+                            <button
+                              type="button"
+                              onClick={() => addBulletToJob(index)}
+                              title="Add bullet"
+                              aria-label="Add bullet"
+                              className="absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                            >
+                              +
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-1">
+                    <h2
+                      className="font-bold tracking-wider"
+                      style={{ fontSize: `${styleSettings.headingSize}px` }}
+                    >
+                      Education
+                    </h2>
+
+                    <div style={{ fontSize: `${styleSettings.bodySize}px` }}>
+                      <div className="flex justify-between gap-4">
+                        <EditableField
+                          editable={showEdit}
+                          value={currResume?.education}
+                          onCommit={(html) =>
+                            commitRichField('education', html)
+                          }
+                          className="font-bold leading-[1.3]"
+                        />
+
+                        <EditableField
+                          editable={showEdit}
+                          value={currResume?.edu_location}
+                          onCommit={(html) =>
+                            commitRichField('edu_location', html)
+                          }
+                          className="font-bold leading-[1.3]"
+                        />
+                      </div>
+
+                      {['edu_desc', 'edu_honors'].map((field) => (
+                        <EditableField
+                          key={field}
+                          editable={showEdit}
+                          value={currResume?.[field]}
+                          onCommit={(html) => commitRichField(field, html)}
+                          className="italic leading-[1.3]"
+                        />
+                      ))}
+                    </div>
+                  </section>
                 </div>
-              ))}
+                {/* end of resumeRef div */}
+
+                {Array.from({ length: pageCount - 1 }, (_, i) => (
+                  <div
+                    key={`page-break-${i}`}
+                    className="pointer-events-none absolute left-0 right-0 border-t-2 border-dashed border-red-400"
+                    style={{ top: (i + 1) * PAGE_HEIGHT_PX }}
+                  >
+                    <span className="absolute -top-5 right-2 rounded bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">
+                      Page {i + 2}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );

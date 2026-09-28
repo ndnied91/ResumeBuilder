@@ -31,6 +31,7 @@ model Resume {
   portfolio   String?
   summary     String?
   jobLink     String?
+  jobDescription String?
   education   String?
   eduDesc     String?
   eduHonors   String?

@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post('/', requireAuth(), async (req, res) => {
   try {
-    const { selectedResumeId_ATS, jobLink_ATS } = req.body;
+    const { selectedResumeId_ATS, jobDescription } = req.body;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
 
@@ -24,7 +24,7 @@ router.post('/', requireAuth(), async (req, res) => {
       });
     }
 
-    if (!selectedResumeId_ATS || !jobLink_ATS?.trim()) {
+    if (!selectedResumeId_ATS || !jobDescription?.trim()) {
       return res.status(400).json({
         message: 'selectedResumeId and jobLink are required',
       });
@@ -66,7 +66,7 @@ router.post('/', requireAuth(), async (req, res) => {
       });
     }
 
-    const score = await analyzeResume({ resume, jobLink_ATS });
+    const score = await analyzeResume({ resume, jobDescription });
 
     // const score = {
     //   score: 85,

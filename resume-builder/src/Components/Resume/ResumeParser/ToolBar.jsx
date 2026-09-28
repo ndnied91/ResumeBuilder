@@ -13,45 +13,12 @@ const FORMAT_BUTTONS = [
   { label: 'Underline', command: 'underline' },
 ];
 
-const SIZE_CONTROLS = [
-  { label: 'Name', field: 'nameSize' },
-  { label: 'Headings', field: 'headingSize' },
-  { label: 'Body', field: 'bodySize' },
-];
-
-const SizeControl = ({ label, value, onDecrement, onIncrement }) => (
-  <div className="flex items-center gap-2">
-    <span className="text-xs font-medium text-gray-600">{label}</span>
-    <button
-      type="button"
-      onClick={onDecrement}
-      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-    >
-      -
-    </button>
-    <span className="min-w-10.5 text-center text-xs text-gray-700">
-      {value}px
-    </span>
-    <button
-      type="button"
-      onClick={onIncrement}
-      className="h-7 w-7 cursor-pointer rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-100"
-    >
-      +
-    </button>
-  </div>
-);
-
 const ToolBar = ({
   showEdit,
   isBusy,
   isSaving,
   updateResume,
   setShowDeleteModal,
-  styleSettings,
-  incrementStyle,
-  decrementStyle,
-  resetStyles,
 }) => {
   if (!showEdit) return null;
 
@@ -96,7 +63,7 @@ const ToolBar = ({
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
+      <div className="flex gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
         {FORMAT_BUTTONS.map(({ label, command }) => (
           <button
             key={command}
@@ -121,26 +88,6 @@ const ToolBar = ({
           className="cursor-pointer rounded-md bg-white px-3 py-1 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
         >
           Link
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
-        {SIZE_CONTROLS.map(({ label, field }) => (
-          <SizeControl
-            key={field}
-            label={label}
-            value={styleSettings[field]}
-            onDecrement={() => decrementStyle(field)}
-            onIncrement={() => incrementStyle(field)}
-          />
-        ))}
-
-        <button
-          type="button"
-          onClick={resetStyles}
-          className="cursor-pointer rounded-md bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
-        >
-          Reset Sizes
         </button>
       </div>
     </div>

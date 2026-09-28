@@ -10,7 +10,6 @@ const Header = ({
   handleDuplicate,
   isBusy,
   isOverflowing,
-  overflowLines,
   handleSafePrint,
 }) => {
   const { currResume, setCurrResume, allResumes } = useAppContext();
@@ -46,6 +45,11 @@ const Header = ({
               value={resume.resumeId || resume.id}
             >
               {resume.targetCompany || 'Untitled Resume'}
+              {resume.createdAt &&
+                ` · ${new Date(resume.createdAt).toLocaleDateString([], {
+                  month: 'short',
+                  day: 'numeric',
+                })}`}
             </option>
           ))}
         </select>
@@ -65,18 +69,16 @@ const Header = ({
         <button
           type="button"
           onClick={() => setShowEdit((prev) => !prev)}
-          className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-gray-300 hover:bg-gray-50"
+          title={isOverflowing ? 'Resume runs past one page' : undefined}
+          className={`flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 text-sm font-medium shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition ${
+            isOverflowing
+              ? 'border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100'
+              : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+          }`}
         >
           <MdModeEdit size={18} />
           {showEdit ? 'Hide Editor' : 'Show Editor'}
         </button>
-
-        {isOverflowing && (
-          <span className="flex h-11 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700">
-            ~{overflowLines} {overflowLines === 1 ? 'line' : 'lines'} over 1
-            page
-          </span>
-        )}
 
         <button
           type="button"

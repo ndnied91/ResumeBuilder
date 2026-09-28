@@ -20,7 +20,7 @@ const router = express.Router();
 router.post('/', requireAuth(), async (req, res) => {
   try {
     const { userId: authUserId } = getAuth(req);
-    const { userId, currResume, jobLink, isApplied } = req.body;
+    const { userId, currResume, jobLink, jobDescription, isApplied } = req.body;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
 
@@ -37,7 +37,11 @@ router.post('/', requireAuth(), async (req, res) => {
       });
     }
 
-    const aiResume = await generateResumeWithAI({ currResume, jobLink });
+    const aiResume = await generateResumeWithAI({
+      currResume,
+      jobDescription,
+      jobLink,
+    });
     //call AI
 
     const savedResume = await saveGeneratedResume(
@@ -45,6 +49,8 @@ router.post('/', requireAuth(), async (req, res) => {
       currResume,
       dbUser.id,
       jobLink,
+      jobDescription,
+      // resumeTitle,
     );
     //now save this into the database;
 

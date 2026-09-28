@@ -10,10 +10,14 @@ export const GenerateResume = () => {
   const {
     jobLink,
     setJobLink,
+    jobDescription,
+    setJobDescription,
     currResume,
     setCurrResume,
     allResumes,
     setAllResumes,
+    resumeTitle,
+    setResumeTitle,
   } = useAppContext();
 
   const { userIds, setUserPane } = useUserContext();
@@ -24,6 +28,8 @@ export const GenerateResume = () => {
 
   const [isApplied, setIsApplied] = useState(true);
 
+  const canGenerate = !isGenerating && jobDescription.trim().length > 0;
+
   const handleSelectResume = (resumeId) => {
     const found = allResumes.find((r) => r.id === resumeId);
     if (!found) return;
@@ -33,7 +39,7 @@ export const GenerateResume = () => {
   };
 
   const generateResume = async () => {
-    if (!isSignedIn || !user) return;
+    if (!isSignedIn || !user || !canGenerate) return;
 
     setIsGenerating(true);
 
@@ -50,6 +56,8 @@ export const GenerateResume = () => {
           userId: userIds.dbId,
           currResume,
           jobLink,
+          resumeTitle, //not added yet
+          jobDescription,
           isApplied, //set job in application
         }),
       });
@@ -68,6 +76,7 @@ export const GenerateResume = () => {
         duration: 2000,
       });
 
+      setJobDescription('');
       setUserPane('resumeParser'); //brings user to new resume
     } catch (error) {
       console.error('Failed to generate resume:', error);
@@ -94,29 +103,54 @@ export const GenerateResume = () => {
 
           {/* Input Section */}
           <section className="mb-8">
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="jobLink"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
               Job Link
             </label>
             <input
+              id="jobLink"
               type="text"
               value={jobLink}
               onChange={(e) => setJobLink(e.target.value)}
               placeholder="Paste job link here"
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
             />
+
+            <label
+              htmlFor="jobDescription"
+              className="mt-6 mb-2 block text-sm font-medium text-gray-700"
+            >
+              Job Description
+            </label>
+            <textarea
+              id="jobDescription"
+              rows={10}
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the full job description here"
+              className="w-full resize-y rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
+            />
           </section>
 
           {/* Content Cards */}
           <section className="mb-8 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-              <p className="text-sm font-medium text-gray-500">Job Link</p>
-              <p className="mt-3 wrap-break-word text-sm text-gray-700">
-                {jobLink || 'No job link added yet.'}
+            <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 hidden">
+              <p className="text-sm font-medium text-gray-500">Resume Title</p>
+              <p className="wrap-break-word text-sm text-gray-700">
+                <input
+                  type="text"
+                  value={resumeTitle}
+                  placeholder="Add resume title"
+                  className="mt-3 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  onChange={(e) => setResumeTitle(e.target.value)}
+                />
               </p>
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
-              <p className="text-sm font-medium text-gray-500">Resume File</p>
+              <p className="text-sm font-medium text-gray-500">Base Resume</p>
 
               <select
                 value={currResume?.resumeId || ''}
@@ -138,32 +172,35 @@ export const GenerateResume = () => {
           </section>
 
           {/* Action */}
-          <section className="flex justify-end gap-2">
-            <button
-              onClick={generateResume}
-              disabled={isGenerating}
-              className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white transition  ${
+          <section className="flex items-center justify-end gap-3">
+            <label
+              className={`flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium text-gray-700 transition ${
                 isGenerating
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-black hover:bg-gray-800 cursor-pointer'
+                  ? 'cursor-not-allowed opacity-50'
+                  : 'cursor-pointer hover:bg-gray-50'
               }`}
             >
-              {isGenerating && (
-                <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin " />
-              )}
-
-              {isGenerating ? 'Generating...' : 'Generate Resume'}
-            </button>
-
-            <label className="px-4 py-2 rounded-lg border flex flex-row items-center gap-2 cursor-pointer">
-              <span>Set job as applied</span>
               <input
-                className="cursor-pointer"
                 type="checkbox"
                 checked={isApplied}
                 onChange={(e) => setIsApplied(e.target.checked)}
+                disabled={isGenerating}
+                className="h-4 w-4 cursor-pointer accent-gray-900 disabled:cursor-not-allowed"
               />
+              Mark as applied
             </label>
+
+            <button
+              type="button"
+              onClick={generateResume}
+              disabled={!canGenerate}
+              className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400 disabled:hover:bg-gray-400"
+            >
+              {isGenerating && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              )}
+              {isGenerating ? 'Generating...' : 'Generate Resume'}
+            </button>
           </section>
         </div>
       </div>

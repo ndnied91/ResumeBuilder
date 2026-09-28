@@ -4,12 +4,14 @@ export const saveGeneratedResume = async (
   currResume,
   userId,
   jobLink,
+  jobDescription,
 ) => {
   const parsedAIResume = JSON.parse(aiResume);
 
   const resume = await prisma.resume.create({
     data: {
       jobLink,
+      jobDescription,
       targetCompany: parsedAIResume.targetCompany || '',
       name: currResume.name || '',
       header: currResume.header || '',
