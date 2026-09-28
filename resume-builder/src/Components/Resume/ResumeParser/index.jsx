@@ -128,6 +128,7 @@ export const ResumeParser = () => {
   // Rich text fields (keep bold / italic / underline / links)
   const commitRichField = (field, html) => {
     const cleanedValue = sanitizeHtml(html);
+    console.log('commit', field, cleanedValue);
     setCurrResume((prev) => ({ ...prev, [field]: cleanedValue }));
   };
 
@@ -254,6 +255,10 @@ export const ResumeParser = () => {
       jobLink: '',
     };
   };
+
+  useEffect(() => {
+    console.log('currResume.summary is now:', currResume?.summary);
+  }, [currResume]);
 
   return (
     <section className="p-6">
