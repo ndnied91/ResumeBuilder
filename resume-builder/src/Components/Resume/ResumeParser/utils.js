@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 
 export const EDITABLE_CLASS =
-  'rounded outline-none transition hover:bg-yellow-50 focus:bg-yellow-50';
+  'rounded outline-none transition hover:bg-yellow-50 focus:bg-yellow-50 focus-visible:ring-1 focus-visible:ring-gray-500/70';
 
 const RICH_TEXT_CONFIG = {
   ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 'a', 'br'],

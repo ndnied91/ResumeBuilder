@@ -10,6 +10,8 @@ const EditableField = ({
   fontSize,
   className = '',
   onKeyDown = handlePlainTextKeyDown,
+  label,
+  multiline = false,
 }) => {
   const ref = useRef(null);
 
@@ -33,6 +35,10 @@ const EditableField = ({
       contentEditable={editable}
       suppressContentEditableWarning
       spellCheck={false}
+      // Only expose it as a text box while it's actually editable
+      role={editable ? 'textbox' : undefined}
+      aria-label={editable ? label : undefined}
+      aria-multiline={editable && multiline ? 'true' : undefined}
       style={fontSize ? { fontSize: `${fontSize}px` } : undefined}
       className={`whitespace-pre-wrap wrap-break-word ${editable ? EDITABLE_CLASS : ''} ${className}`}
       onKeyDown={onKeyDown}

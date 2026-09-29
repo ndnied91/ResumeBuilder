@@ -90,6 +90,28 @@ router.get(
   },
 );
 
+router.delete('/job-applications', requireAuth(), async (req, res) => {
+  try {
+    const { userId } = getAuth(req); // Clerk user id
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { count } = await prisma.jobApplication.deleteMany({
+      where: { userId: dbUser.id },
+    });
+
+    res.json({ count });
+  } catch (error) {
+    console.error('Failed to delete all job applications:', error);
+    res.status(500).json({ message: 'Failed to delete job applications' });
+  }
+});
+
 router.delete('/job-applications/:id', requireAuth(), async (req, res) => {
   try {
     const { id } = req.params;

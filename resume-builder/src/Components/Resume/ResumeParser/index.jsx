@@ -22,6 +22,9 @@ const styleSettings = {
   bodySize: 12,
 };
 
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500/70';
+
 export const ResumeParser = () => {
   const { currResume, setCurrResume, setAllResumes, createResume } =
     useAppContext();
@@ -157,34 +160,37 @@ export const ResumeParser = () => {
     if (!isSignedIn || !user) return;
 
     isSetSaving(true);
-    const token = await getToken(); // from Clerk
-    const res = await fetch(`/api/users/resumes/${currResume.resumeId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(currResume),
-    });
 
-    const data = await res.json();
-    isSetSaving(false);
-
-    if (res.status === 200) {
-      toast.success('Resume saved successfully!', {
-        duration: 2000,
+    try {
+      const token = await getToken(); // from Clerk
+      const res = await fetch(`/api/users/resumes/${currResume.resumeId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(currResume),
       });
-    } else {
-      toast.error(data?.message || 'Failed to save resume');
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data?.message || 'Failed to save resume');
+        return;
+      }
+
+      toast.success('Resume saved successfully!', { duration: 2000 });
+      setAllResumes((prev) =>
+        prev.map((resume) => (resume.id === data.id ? data : resume)),
+      );
+      setCurrResume((prev) => ({ ...prev, updatedAt: data.updatedAt }));
+      setShowEdit(false);
+    } catch (error) {
+      console.error('Failed to save resume:', error);
+      toast.error('Failed to save resume');
+    } finally {
+      isSetSaving(false);
     }
-
-    setAllResumes((prev) =>
-      prev.map((resume) => (resume.id === data.id ? data : resume)),
-    );
-
-    isSetSaving(false);
-    setShowEdit((prev) => !prev);
-    return data;
   };
 
   const handleDuplicate = async () => {
@@ -250,17 +256,23 @@ export const ResumeParser = () => {
         />
 
         {!hasResume ? (
-          <div className="flex h-[calc(100vh-220px)] flex-col items-center justify-center gap-3">
-            <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+          <div
+            role="status"
+            className="flex h-[calc(100vh-220px)] flex-col items-center justify-center gap-3"
+          >
+            <span
+              aria-hidden="true"
+              className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900"
+            />
             <p className="text-sm font-medium text-gray-500">
               Loading resume...
             </p>
           </div>
         ) : (
-          <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4 ">
+          <div className="h-[calc(100vh-220px)] overflow-auto rounded-xl bg-gray-100 p-4">
             {showEdit && (
               <div className="flex justify-center">
-                <div className="mb-6 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm w-204">
+                <div className="mb-6 w-204 rounded-xl border border-gray-200 bg-white px-6 py-4 shadow-sm">
                   <div className="grid gap-4 md:grid-cols-3">
                     <Input
                       label="Title"
@@ -283,6 +295,7 @@ export const ResumeParser = () => {
                     <Input
                       label="Job Link"
                       name="jobLink"
+                      type="url"
                       value={currResume.jobLink}
                       onChange={setTopLevelField}
                       onBlur={commitTopLevelField}
@@ -294,28 +307,31 @@ export const ResumeParser = () => {
                         {currResume.createdAt &&
                           `Created ${new Date(currResume.createdAt).toLocaleString()}`}
                       </p>
-
                       <p>
                         {currResume.updatedAt &&
                           `Last saved ${new Date(currResume.updatedAt).toLocaleString()}`}
                       </p>
                     </div>
-                    {isOverflowing && (
-                      <span className="flex h-11 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700">
-                        ~{overflowLines}{' '}
-                        {overflowLines === 1 ? 'line' : 'lines'} over 1 page
-                      </span>
-                    )}
+
+                    {/* Always rendered so screen readers announce it when it appears */}
+                    <div role="status">
+                      {isOverflowing && (
+                        <span className="flex h-11 items-center rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-medium text-red-700">
+                          ~{overflowLines}{' '}
+                          {overflowLines === 1 ? 'line' : 'lines'} over 1 page
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* end of title  */}
             <div className="flex min-w-0 justify-center">
               <div className="relative w-full max-w-204">
-                <div
+                <article
                   ref={resumeRef}
+                  aria-label={showEdit ? 'Resume editor' : 'Resume preview'}
                   className="w-full min-h-264 bg-white px-12 py-8 text-black print:min-h-0 [&_a]:underline"
                   style={{
                     fontFamily: 'Calibri, Arial, Helvetica, sans-serif',
@@ -323,20 +339,26 @@ export const ResumeParser = () => {
                 >
                   <header className="border-b border-gray-300 pb-2 text-center">
                     <EditableField
-                      as="h1"
+                      as="h2"
                       rich={false}
                       editable={showEdit}
+                      label="Name"
                       value={currResume?.name}
                       onCommit={(text) => commitTopLevelField('name', text)}
                       fontSize={styleSettings.nameSize}
                       className="font-bold tracking-wide"
                     />
 
-                    {['header', 'contact', 'portfolio'].map((field) => (
+                    {[
+                      ['header', 'Location and links'],
+                      ['contact', 'Contact information'],
+                      ['portfolio', 'Portfolio'],
+                    ].map(([field, label]) => (
                       <EditableField
                         key={field}
                         as="p"
                         editable={showEdit}
+                        label={label}
                         value={currResume?.[field]}
                         onCommit={(html) => commitRichField(field, html)}
                         fontSize={styleSettings.bodySize + 1}
@@ -346,16 +368,18 @@ export const ResumeParser = () => {
                   </header>
 
                   <section className="mt-1.5">
-                    <h2
+                    <h3
                       className="font-bold tracking-wider"
                       style={{ fontSize: `${styleSettings.headingSize}px` }}
                     >
                       Summary
-                    </h2>
+                    </h3>
 
                     <EditableField
                       as="div"
                       editable={showEdit}
+                      label="Summary"
+                      multiline
                       value={currResume?.summary}
                       onCommit={(html) => commitRichField('summary', html)}
                       fontSize={styleSettings.bodySize}
@@ -364,12 +388,12 @@ export const ResumeParser = () => {
                   </section>
 
                   <section className="mt-1.5">
-                    <h2
+                    <h3
                       className="font-bold tracking-wider"
                       style={{ fontSize: `${styleSettings.headingSize}px` }}
                     >
                       Technical Skills
-                    </h2>
+                    </h3>
 
                     <div className="space-y-0.5">
                       {currResume?.skills?.map((skillGroup, index) => (
@@ -382,6 +406,7 @@ export const ResumeParser = () => {
                             as="span"
                             rich={false}
                             editable={showEdit}
+                            label={`Skill category ${index + 1}`}
                             value={skillGroup.category}
                             onCommit={(text) =>
                               commitSkillCategory(index, text)
@@ -393,6 +418,7 @@ export const ResumeParser = () => {
                             as="span"
                             rich={false}
                             editable={showEdit}
+                            label={`${skillGroup.category || `Skill category ${index + 1}`} skills, comma separated`}
                             value={skillGroup.items?.join(', ')}
                             onCommit={(text) => commitSkillItems(index, text)}
                           />
@@ -402,123 +428,134 @@ export const ResumeParser = () => {
                   </section>
 
                   <section className="mt-1.5">
-                    <h2
+                    <h3
                       className="font-bold tracking-wider"
                       style={{ fontSize: `${styleSettings.headingSize}px` }}
                     >
                       Work Experience
-                    </h2>
+                    </h3>
 
                     <div className="space-y-2">
-                      {currResume?.experience?.map((job, index) => (
-                        <div
-                          key={`experience-${index}`}
-                          className="relative"
-                          style={{ fontSize: `${styleSettings.bodySize}px` }}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <EditableField
-                              editable={showEdit}
-                              value={job.company}
-                              onCommit={(html) =>
-                                commitExperienceField(index, 'company', html)
-                              }
-                              className="font-bold leading-[1.3]"
-                            />
+                      {currResume?.experience?.map((job, index) => {
+                        const jobName =
+                          (job.company || '').replace(/<[^>]*>/g, '') ||
+                          `Job ${index + 1}`;
+
+                        return (
+                          <div
+                            key={`experience-${index}`}
+                            className="relative"
+                            style={{ fontSize: `${styleSettings.bodySize}px` }}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <EditableField
+                                editable={showEdit}
+                                label={`Company, job ${index + 1}`}
+                                value={job.company}
+                                onCommit={(html) =>
+                                  commitExperienceField(index, 'company', html)
+                                }
+                                className="font-bold leading-[1.3]"
+                              />
+
+                              <EditableField
+                                editable={showEdit}
+                                label={`Dates, ${jobName}`}
+                                value={job.date}
+                                onCommit={(html) =>
+                                  commitExperienceField(index, 'date', html)
+                                }
+                                className="font-bold leading-[1.3]"
+                              />
+                            </div>
 
                             <EditableField
                               editable={showEdit}
-                              value={job.date}
+                              label={`Role, ${jobName}`}
+                              value={job.role}
                               onCommit={(html) =>
-                                commitExperienceField(index, 'date', html)
+                                commitExperienceField(index, 'role', html)
                               }
-                              className="font-bold leading-[1.3]"
+                              className="italic leading-tight"
                             />
-                          </div>
 
-                          <EditableField
-                            editable={showEdit}
-                            value={job.role}
-                            onCommit={(html) =>
-                              commitExperienceField(index, 'role', html)
-                            }
-                            className="italic leading-tight"
-                          />
+                            <ul className="mt-0.5 list-disc pl-4 leading-[1.3]">
+                              {job.bullets?.map((bullet, bulletIndex) => (
+                                <li
+                                  key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
+                                  className="group relative"
+                                >
+                                  <EditableField
+                                    as="span"
+                                    editable={showEdit}
+                                    label={`${jobName}, bullet ${bulletIndex + 1}. Press Enter to add a bullet.`}
+                                    value={bullet}
+                                    onCommit={(html) =>
+                                      commitBullet(index, bulletIndex, html)
+                                    }
+                                    className="block"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addBulletToJob(index);
+                                      }
 
-                          <ul className="mt-0.5 list-disc pl-4 leading-[1.3]">
-                            {job.bullets?.map((bullet, bulletIndex) => (
-                              <li
-                                key={`job-bullet-${index}-${bulletIndex}-${bullet}`}
-                                className="group relative"
+                                      if (
+                                        e.key === 'Backspace' &&
+                                        !e.currentTarget.textContent.trim()
+                                      ) {
+                                        e.preventDefault();
+                                        removeBullet(index, bulletIndex);
+                                      }
+                                    }}
+                                  />
+
+                                  {showEdit && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        removeBullet(index, bulletIndex)
+                                      }
+                                      aria-label={`Remove bullet ${bulletIndex + 1} from ${jobName}`}
+                                      className={`absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-500 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:bg-red-50 hover:text-red-600 ${focusRing}`}
+                                    >
+                                      <span aria-hidden="true">✕</span>
+                                    </button>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+
+                            {showEdit && (
+                              <button
+                                type="button"
+                                onClick={() => addBulletToJob(index)}
+                                title="Add bullet"
+                                aria-label={`Add bullet to ${jobName}`}
+                                className={`absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50 ${focusRing}`}
                               >
-                                <EditableField
-                                  as="span"
-                                  editable={showEdit}
-                                  value={bullet}
-                                  onCommit={(html) =>
-                                    commitBullet(index, bulletIndex, html)
-                                  }
-                                  className="block"
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      addBulletToJob(index);
-                                    }
-
-                                    if (
-                                      e.key === 'Backspace' &&
-                                      !e.currentTarget.textContent.trim()
-                                    ) {
-                                      e.preventDefault();
-                                      removeBullet(index, bulletIndex);
-                                    }
-                                  }}
-                                />
-
-                                {showEdit && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      removeBullet(index, bulletIndex)
-                                    }
-                                    className="absolute -right-7 top-0 cursor-pointer rounded px-1 text-xs text-gray-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600"
-                                    aria-label="Remove bullet"
-                                  >
-                                    ✕
-                                  </button>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-
-                          {showEdit && (
-                            <button
-                              type="button"
-                              onClick={() => addBulletToJob(index)}
-                              title="Add bullet"
-                              aria-label="Add bullet"
-                              className="absolute -left-9 bottom-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                            >
-                              +
-                            </button>
-                          )}
-                        </div>
-                      ))}
+                                <span aria-hidden="true">+</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
 
                   <section className="mt-1">
-                    <h2
+                    <h3
                       className="font-bold tracking-wider"
                       style={{ fontSize: `${styleSettings.headingSize}px` }}
                     >
                       Education
-                    </h2>
+                    </h3>
 
                     <div style={{ fontSize: `${styleSettings.bodySize}px` }}>
                       <div className="flex justify-between gap-4">
                         <EditableField
                           editable={showEdit}
+                          label="School"
                           value={currResume?.education}
                           onCommit={(html) =>
                             commitRichField('education', html)
@@ -528,6 +565,7 @@ export const ResumeParser = () => {
 
                         <EditableField
                           editable={showEdit}
+                          label="School location"
                           value={currResume?.edu_location}
                           onCommit={(html) =>
                             commitRichField('edu_location', html)
@@ -536,10 +574,14 @@ export const ResumeParser = () => {
                         />
                       </div>
 
-                      {['edu_desc', 'edu_honors'].map((field) => (
+                      {[
+                        ['edu_desc', 'Degree'],
+                        ['edu_honors', 'Honors'],
+                      ].map(([field, label]) => (
                         <EditableField
                           key={field}
                           editable={showEdit}
+                          label={label}
                           value={currResume?.[field]}
                           onCommit={(html) => commitRichField(field, html)}
                           className="italic leading-[1.3]"
@@ -547,12 +589,13 @@ export const ResumeParser = () => {
                       ))}
                     </div>
                   </section>
-                </div>
-                {/* end of resumeRef div */}
+                </article>
 
+                {/* Visual page-break guides (the overflow status covers this for screen readers) */}
                 {Array.from({ length: pageCount - 1 }, (_, i) => (
                   <div
                     key={`page-break-${i}`}
+                    aria-hidden="true"
                     className="pointer-events-none absolute left-0 right-0 border-t-2 border-dashed border-red-400"
                     style={{ top: (i + 1) * PAGE_HEIGHT_PX }}
                   >

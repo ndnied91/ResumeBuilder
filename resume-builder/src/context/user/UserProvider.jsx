@@ -3,7 +3,7 @@ import { UserContext } from './UserContext';
 
 export function UserProvider({ children }) {
   const [userIds, setUserIds] = useState();
-  const [userPane, setUserPane] = useState('ats');
+  const [userPane, setUserPane] = useState('dashboard');
 
   const value = useMemo(
     () => ({ userIds, setUserIds, userPane, setUserPane }),

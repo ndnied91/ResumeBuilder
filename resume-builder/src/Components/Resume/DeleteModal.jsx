@@ -3,6 +3,7 @@ import { useAppContext } from '../../context/useAppContext';
 import toast from 'react-hot-toast';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import { mapResumeToState } from '../../utils/helper';
+import { useEffect } from 'react';
 
 const DeleteModal = ({ showDeleteModal, setShowDeleteModal }) => {
   const { getToken, isSignedIn } = useAuth();
@@ -51,6 +52,16 @@ const DeleteModal = ({ showDeleteModal, setShowDeleteModal }) => {
       console.error('Delete failed:', error);
     }
   };
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowDeleteModal(false);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [setShowDeleteModal]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
