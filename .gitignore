@@ -1,2 +1,4 @@
 resume-builder/.env
 server/.env
+
+node_modules

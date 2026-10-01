@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import { requireAuth, getAuth } from '@clerk/express';
 import { prisma } from '../../lib/prisma.js';
 import { saveJobApplication } from '../../services/jobApplicationService.js';
@@ -7,7 +6,6 @@ import { saveJobApplication } from '../../services/jobApplicationService.js';
 import {
   getDbUserFromAuth,
   validateUserAccess,
-  validateResumeOwnership,
 } from './../utils/authHelper.js';
 
 const router = express.Router();

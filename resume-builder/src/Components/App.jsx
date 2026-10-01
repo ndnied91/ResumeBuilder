@@ -6,7 +6,7 @@ import { useJobAppsContext } from '../context/jobApps/JobAppsContext';
 import { GenerateResume } from './GenerateResume';
 import { Settings } from './Settings';
 import { useEffect } from 'react';
-import { Dashboard } from './Dashboard';
+import { Dashboard } from './DashBoard/Dashboard';
 import { HomePage } from './HomePage';
 import { useUser, useAuth, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Toaster } from 'react-hot-toast';

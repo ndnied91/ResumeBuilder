@@ -85,7 +85,9 @@ export function AtsProvider({ children }) {
 
         setAllResumes((prev) => [...prev, data]);
         setCurrResume(mapResumeToState(data));
-        setUserPane('resumeParser');
+        setSelectedResumeId_ATS(data.id);
+        setAnalysisResult(null);
+        setUserPane('edit');
         toast.success('Suggestions applied! Review your updated resume.', {
           duration: 3000,
         });

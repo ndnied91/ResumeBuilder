@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import FocusTrap from 'focus-trap-react';
-import { useAppContext } from '../context/useAppContext';
-import { useUserContext } from '../context/user/UserContext';
+import { useAppContext } from '../../context/useAppContext';
+
+import { useUserContext } from '../../context/user/UserContext';
 
 import { FiUploadCloud, FiFileText, FiLink, FiTag } from 'react-icons/fi';
-import { mapResumeToState } from '../utils/helper';
+import { mapResumeToState } from '../../utils/helper';
 
 const focusRing =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2';
