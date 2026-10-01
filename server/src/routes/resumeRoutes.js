@@ -1,21 +1,21 @@
 import express from 'express';
-import cors from 'cors';
-import { clerkMiddleware, requireAuth, getAuth } from '@clerk/express';
-import { prisma } from '../../lib/prisma.js';
-
+import multer from 'multer';
 import { createRequire } from 'module';
+import { requireAuth } from '@clerk/express';
+import { prisma } from '../../lib/prisma.js';
+import { getDbUserFromAuth } from './../utils/authHelper.js';
+import { saveJobApplication } from '../../services/jobApplicationService.js';
+import { parsePDFResumeWithAI } from '../../services/aiService.js';
+import {
+  createResumeRecord,
+  normalizeResumeForSave,
+  buildExperiencesCreate,
+  buildSkillGroupsCreate,
+  RESUME_INCLUDE,
+} from '../../services/resumeService.js';
 
 const require = createRequire(import.meta.url);
 const { PDFParse } = require('pdf-parse');
-
-import multer from 'multer';
-import {
-  getDbUserFromAuth,
-  validateUserAccess,
-  validateResumeOwnership,
-} from './../utils/authHelper.js';
-import { saveJobApplication } from '../../services/jobApplicationService.js';
-import { parsePDFResumeWithAI } from '../../services/aiService.js';
 
 const router = express.Router();
 const upload = multer();
@@ -30,69 +30,13 @@ router.post('/resumes', requireAuth(), async (req, res) => {
     }
 
     const dbUser = await getDbUserFromAuth(req, prisma);
-
     if (!dbUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const resume = await prisma.resume.create({
-      data: {
-        name: currResume.name,
-        targetCompany: currResume.targetCompany,
-        header: currResume.header,
-        title: currResume.title,
-        email: currResume.email,
-        contact: currResume.contact,
-        portfolio: currResume.portfolio,
-        summary: currResume.summary,
-        education: currResume.education,
-        eduDesc: currResume.edu_desc,
-        eduHonors: currResume.edu_honors,
-        eduLocation: currResume.edu_location,
-        userId: dbUser.id,
-
-        experiences: {
-          create: (currResume.experience || []).map((job, jobIndex) => ({
-            role: job.role,
-            company: job.company,
-            date: job.date,
-            order: jobIndex,
-            bullets: {
-              create: (job.bullets || []).map((bullet, bulletIndex) => ({
-                text: bullet,
-                order: bulletIndex,
-              })),
-            },
-          })),
-        },
-
-        skillGroups: {
-          create: (currResume.skills || []).map((group, groupIndex) => ({
-            category: group.category,
-            order: groupIndex,
-            items: {
-              create: (group.items || []).map((item, itemIndex) => ({
-                name: item,
-                order: itemIndex,
-              })),
-            },
-          })),
-        },
-      },
-      include: {
-        experiences: {
-          include: {
-            bullets: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-        skillGroups: {
-          include: {
-            items: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
+    const resume = await createResumeRecord(dbUser.id, currResume, {
+      jobLink: currResume.jobLink,
+      jobDescription: currResume.jobDescription,
     });
 
     if (applied) {
@@ -115,12 +59,7 @@ router.post('/resumes', requireAuth(), async (req, res) => {
 //gets all resumes for user
 router.get('/resumes', requireAuth(), async (req, res) => {
   try {
-    const { userId: clerkId } = getAuth(req);
-
-    const dbUser = await prisma.user.findUnique({
-      where: { clerkId },
-    });
-
+    const dbUser = await getDbUserFromAuth(req, prisma);
     if (!dbUser) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -128,20 +67,7 @@ router.get('/resumes', requireAuth(), async (req, res) => {
     const resumes = await prisma.resume.findMany({
       where: { userId: dbUser.id },
       orderBy: { updatedAt: 'desc' },
-      include: {
-        experiences: {
-          include: {
-            bullets: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-        skillGroups: {
-          include: {
-            items: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
+      include: RESUME_INCLUDE,
     });
 
     const formattedResumes = resumes.map((resume) => ({
@@ -156,34 +82,26 @@ router.get('/resumes', requireAuth(), async (req, res) => {
   }
 });
 
-//PATCH ROUTE FOR RESUMES
+//updates a resume
 router.patch('/resumes/:resumeId', requireAuth(), async (req, res) => {
   try {
     const { resumeId } = req.params;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
     if (!dbUser) {
-      return res.status(404).json({
-        message: 'Authenticated user was not found in the database',
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const resumeById = await prisma.resume.findUnique({
-      where: { id: resumeId },
+    const existing = await prisma.resume.findFirst({
+      where: { id: resumeId, userId: dbUser.id },
+      select: { id: true },
     });
 
-    if (!resumeById) {
-      return res.status(404).json({
-        message: 'Resume not found',
-      });
+    if (!existing) {
+      return res.status(404).json({ message: 'Resume not found' });
     }
 
-    const ownership = validateResumeOwnership(resumeById, dbUser.id);
-    if (!ownership.ok) {
-      return res.status(ownership.status).json({
-        message: ownership.message,
-      });
-    }
+    const { experience, skills } = normalizeResumeForSave(req.body);
 
     const updatedResume = await prisma.resume.update({
       where: { id: resumeId },
@@ -200,91 +118,42 @@ router.patch('/resumes/:resumeId', requireAuth(), async (req, res) => {
         eduDesc: req.body.eduDesc,
         eduHonors: req.body.eduHonors,
         eduLocation: req.body.eduLocation,
-
         experiences: {
           deleteMany: {},
-          create: (req.body.experience || []).map((exp, expIndex) => ({
-            company: exp.company,
-            role: exp.role,
-            date: exp.date,
-            order: expIndex,
-            bullets: {
-              create: (exp.bullets || []).map((bullet, bulletIndex) => ({
-                text: bullet,
-                order: bulletIndex,
-              })),
-            },
-          })),
+          create: buildExperiencesCreate(experience),
         },
-
         skillGroups: {
           deleteMany: {},
-          create: (req.body.skills || []).map((group, groupIndex) => ({
-            category: group.category,
-            order: groupIndex,
-            items: {
-              create: (group.items || []).map((item, itemIndex) => ({
-                name: item,
-                order: itemIndex,
-              })),
-            },
-          })),
+          create: buildSkillGroupsCreate(skills),
         },
       },
-      include: {
-        experiences: {
-          include: {
-            bullets: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-        skillGroups: {
-          include: {
-            items: true,
-          },
-          orderBy: { order: 'asc' },
-        },
-      },
+      include: RESUME_INCLUDE,
     });
 
     return res.status(200).json(updatedResume);
   } catch (error) {
     console.error('PATCH error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Failed to update resume' });
   }
 });
 
-//DELETE ROUTE UPDATED
+//deletes a resume
 router.delete('/resumes/:resumeId', requireAuth(), async (req, res) => {
   try {
     const { resumeId } = req.params;
 
     const dbUser = await getDbUserFromAuth(req, prisma);
     if (!dbUser) {
-      return res.status(404).json({
-        message: 'Authenticated user was not found in the database',
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    const resumeById = await prisma.resume.findUnique({
-      where: { id: resumeId },
+    const { count } = await prisma.resume.deleteMany({
+      where: { id: resumeId, userId: dbUser.id },
     });
 
-    if (!resumeById) {
-      return res.status(404).json({
-        message: 'Resume not found',
-      });
+    if (count === 0) {
+      return res.status(404).json({ message: 'Resume not found' });
     }
-
-    const ownership = validateResumeOwnership(resumeById, dbUser.id);
-    if (!ownership.ok) {
-      return res.status(ownership.status).json({
-        message: ownership.message,
-      });
-    }
-    await prisma.resume.delete({
-      where: { id: resumeId },
-    });
 
     return res.status(200).json({ message: 'Resume deleted successfully' });
   } catch (error) {
@@ -293,146 +162,47 @@ router.delete('/resumes/:resumeId', requireAuth(), async (req, res) => {
   }
 });
 
-// //DELETE ROUTE
-// router.delete('/:userId/resumes/:resumeId', requireAuth(), async (req, res) => {
-//   try {
-//     const { resumeId, userId } = req.params;
-
-//     const dbUser = await getDbUserFromAuth(req, prisma);
-
-//     const userAccess = validateUserAccess(dbUser, userId);
-//     if (!userAccess.ok) {
-//       return res.status(userAccess.status).json({
-//         message: userAccess.message,
-//       });
-//     }
-
-//     const resume = await prisma.resume.findUnique({
-//       where: { id: resumeId },
-//     });
-
-//     const ownership = validateResumeOwnership(resume, dbUser.id);
-//     if (!ownership.ok) {
-//       return res.status(ownership.status).json({
-//         message: ownership.message,
-//       });
-//     }
-
-//     await prisma.resume.delete({
-//       where: { id: resumeId },
-//     });
-
-//     return res.status(200).json({ message: 'Resume deleted successfully' });
-//   } catch (error) {
-//     console.error('Delete error:', error);
-//     return res.status(500).json({ message: 'Failed to delete resume' });
-//   }
-// });
-
-//RESUME UPDATE PATH
+//uploads a PDF resume and parses it with AI
 router.post(
   '/resumes/upload',
   requireAuth(),
   upload.single('resumeFile'),
   async (req, res) => {
-    try {
-      const { userId: authUserId } = getAuth(req);
+    const file = req.file;
 
-      const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    if (file.mimetype !== 'application/pdf') {
+      return res.status(400).json({ message: 'Unsupported file type' });
+    }
+
+    const parser = new PDFParse({ data: file.buffer });
+
+    try {
       const { jobLink, title } = req.body;
 
       const dbUser = await getDbUserFromAuth(req, prisma);
-
       if (!dbUser) {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      if (!file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-
-      if (file.mimetype !== 'application/pdf') {
-        return res.status(400).json({ message: 'Unsupported file type' });
-      }
-
-      const parser = new PDFParse({ data: file.buffer });
-      const result = await parser.getText();
-      await parser.destroy();
-
-      const resumeText = result.text;
-
+      const { text: resumeText } = await parser.getText();
       const aiResume = await parsePDFResumeWithAI({ resumeText });
 
-      const resume = await prisma.resume.create({
-        data: {
-          name: aiResume.name,
-          targetCompany: title, //from user
-          header: aiResume.header,
-          title: title,
-          email: aiResume.email,
-          contact: aiResume.contact,
-          portfolio: aiResume.portfolio,
-          summary: aiResume.summary,
-          education: aiResume.education,
-          eduDesc: aiResume.edu_desc,
-          eduHonors: aiResume.edu_honors,
-          eduLocation: aiResume.edu_location,
-          userId: dbUser.id,
-          jobLink,
+      const resume = await createResumeRecord(
+        dbUser.id,
+        { ...aiResume, title, targetCompany: title },
+        { jobLink },
+      );
 
-          experiences: {
-            create: (aiResume.experience || []).map((job, jobIndex) => ({
-              role: job.role,
-              company: job.company,
-              date: job.date,
-              order: jobIndex,
-              bullets: {
-                create: (job.bullets || []).map((bullet, bulletIndex) => ({
-                  text: bullet,
-                  order: bulletIndex,
-                })),
-              },
-            })),
-          },
-
-          skillGroups: {
-            create: (aiResume.skills || []).map((group, groupIndex) => ({
-              category: group.category,
-              order: groupIndex,
-              items: {
-                create: (group.items || []).map((item, itemIndex) => ({
-                  name: item,
-                  order: itemIndex,
-                })),
-              },
-            })),
-          },
-        },
-        include: {
-          experiences: {
-            include: {
-              bullets: true,
-            },
-            orderBy: { order: 'asc' },
-          },
-          skillGroups: {
-            include: {
-              items: true,
-            },
-            orderBy: { order: 'asc' },
-          },
-        },
-      });
-
-      const formattedResume = {
-        ...resume,
-        resumeId: resume.id,
-      };
-
-      return res.status(201).json(formattedResume);
+      return res.status(201).json({ ...resume, resumeId: resume.id });
     } catch (error) {
       console.error('Upload error:', error);
       return res.status(500).json({ message: 'Upload failed' });
+    } finally {
+      await parser.destroy();
     }
   },
 );

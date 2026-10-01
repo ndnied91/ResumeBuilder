@@ -50,7 +50,6 @@ router.post('/', requireAuth(), async (req, res) => {
       dbUser.id,
       jobLink,
       jobDescription,
-      // resumeTitle,
     );
     //now save this into the database;
 

@@ -1,4 +1,137 @@
-//takes the AI generated resume and saved it to the database;
+export const RESUME_INCLUDE = {
+  experiences: {
+    include: { bullets: { orderBy: { order: 'asc' } } },
+    orderBy: { order: 'asc' },
+  },
+  skillGroups: {
+    include: { items: { orderBy: { order: 'asc' } } },
+    orderBy: { order: 'asc' },
+  },
+};
+
+export const buildExperiencesCreate = (experience = []) =>
+  experience.map((job, jobIndex) => ({
+    role: job.role || '',
+    company: job.company || '',
+    date: job.date || '',
+    order: jobIndex,
+    bullets: {
+      create: job.bullets.map((text, bulletIndex) => ({
+        text,
+        order: bulletIndex,
+      })),
+    },
+  }));
+
+export const buildSkillGroupsCreate = (skills = []) =>
+  skills.map((group, groupIndex) => ({
+    category: group.category || '',
+    order: groupIndex,
+    items: {
+      create: group.items.map((name, itemIndex) => ({
+        name,
+        order: itemIndex,
+      })),
+    },
+  }));
+
+export const createResumeRecord = async (
+  userId,
+  resume,
+  { jobLink = '', jobDescription = '' } = {},
+) => {
+  const data = normalizeResumeForSave(resume);
+
+  return prisma.resume.create({
+    data: {
+      userId,
+      jobLink: jobLink || '',
+      jobDescription: jobDescription || '',
+      targetCompany: data.targetCompany || '',
+      name: data.name || '',
+      header: data.header || '',
+      title: data.title || '',
+      email: data.email || '',
+      contact: data.contact || '',
+      portfolio: data.portfolio || '',
+      summary: data.summary || '',
+      education: data.education || '',
+      eduDesc: data.edu_desc,
+      eduHonors: data.edu_honors,
+      eduLocation: data.edu_location,
+      experiences: { create: buildExperiencesCreate(data.experience) },
+      skillGroups: { create: buildSkillGroupsCreate(data.skills) },
+    },
+    include: RESUME_INCLUDE,
+  });
+};
+
+// export const createResumeRecord = async (
+//   userId,
+//   resume,
+//   { jobLink = '', jobDescription = '' } = {},
+// ) => {
+//   const data = normalizeResumeForSave(resume);
+
+//   return prisma.resume.create({
+//     data: {
+//       userId,
+//       jobLink: jobLink || '',
+//       jobDescription: jobDescription || '',
+//       targetCompany: data.targetCompany || '',
+//       name: data.name || '',
+//       header: data.header || '',
+//       title: data.title || '',
+//       email: data.email || '',
+//       contact: data.contact || '',
+//       portfolio: data.portfolio || '',
+//       summary: data.summary || '',
+//       education: data.education || '',
+//       eduDesc: data.edu_desc,
+//       eduHonors: data.edu_honors,
+//       eduLocation: data.edu_location,
+
+//       experiences: {
+//         create: data.experience.map((job, jobIndex) => ({
+//           role: job.role || '',
+//           company: job.company || '',
+//           date: job.date || '',
+//           order: jobIndex,
+//           bullets: {
+//             create: job.bullets.map((text, bulletIndex) => ({
+//               text,
+//               order: bulletIndex,
+//             })),
+//           },
+//         })),
+//       },
+
+//       skillGroups: {
+//         create: data.skills.map((group, groupIndex) => ({
+//           category: group.category || '',
+//           order: groupIndex,
+//           items: {
+//             create: group.items.map((name, itemIndex) => ({
+//               name,
+//               order: itemIndex,
+//             })),
+//           },
+//         })),
+//       },
+//     },
+//     include: {
+//       experiences: {
+//         include: { bullets: { orderBy: { order: 'asc' } } },
+//         orderBy: { order: 'asc' },
+//       },
+//       skillGroups: {
+//         include: { items: { orderBy: { order: 'asc' } } },
+//         orderBy: { order: 'asc' },
+//       },
+//     },
+//   });
+// };
+
 export const saveGeneratedResume = async (
   aiResume,
   currResume,
@@ -8,68 +141,17 @@ export const saveGeneratedResume = async (
 ) => {
   const parsedAIResume = JSON.parse(aiResume);
 
-  const resume = await prisma.resume.create({
-    data: {
-      jobLink,
-      jobDescription,
+  return createResumeRecord(
+    userId,
+    {
+      ...currResume,
       targetCompany: parsedAIResume.targetCompany || '',
-      name: currResume.name || '',
-      header: currResume.header || '',
-      email: currResume.email || '',
-      contact: currResume.contact || '',
-      portfolio: currResume.portfolio || '',
       summary: parsedAIResume.summary || '',
-      education: currResume.education || '',
-      eduDesc: currResume.edu_desc ?? currResume.eduDesc ?? '',
-      eduHonors: currResume.edu_honors ?? currResume.eduHonors ?? '',
-      eduLocation: currResume.edu_location ?? currResume.eduLocation ?? '',
-      userId,
-
-      experiences: {
-        create: (parsedAIResume.experience || currResume.experience || []).map(
-          (job, jobIndex) => ({
-            role: job.role || '',
-            company: job.company || '',
-            date: job.date || '',
-            order: jobIndex,
-            bullets: {
-              create: (job.bullets || []).map((bullet, bulletIndex) => ({
-                text: typeof bullet === 'string' ? bullet : bullet.text || '',
-                order: bulletIndex,
-              })),
-            },
-          }),
-        ),
-      },
-
-      skillGroups: {
-        create: (parsedAIResume.skillGroups || parsedAIResume.skills || []).map(
-          (group, groupIndex) => ({
-            category: group.category || '',
-            order: groupIndex,
-            items: {
-              create: (group.items || []).map((item, itemIndex) => ({
-                name: typeof item === 'string' ? item : item.name || '',
-                order: itemIndex,
-              })),
-            },
-          }),
-        ),
-      },
+      experience: parsedAIResume.experience,
+      skills: parsedAIResume.skillGroups || parsedAIResume.skills,
     },
-    include: {
-      experiences: {
-        include: { bullets: true },
-        orderBy: { order: 'asc' },
-      },
-      skillGroups: {
-        include: { items: true },
-        orderBy: { order: 'asc' },
-      },
-    },
-  });
-
-  return resume;
+    { jobLink, jobDescription },
+  );
 };
 
 export const normalizeResumeForSave = (resume = {}) => {
