@@ -8,7 +8,11 @@ import {
   validateUserAccess,
   validateResumeOwnership,
 } from './../utils/authHelper.js';
-import { analyzeResume } from '../../services/aiService.js';
+import {
+  analyzeResume,
+  improveResumeWithAI,
+} from '../../services/aiService.js';
+import { saveGeneratedResume } from '../../services/resumeService.js';
 
 const router = express.Router();
 
@@ -26,7 +30,7 @@ router.post('/', requireAuth(), async (req, res) => {
 
     if (!selectedResumeId_ATS || !jobDescription?.trim()) {
       return res.status(400).json({
-        message: 'selectedResumeId and jobLink are required',
+        message: 'selectedResumeId and job description are required',
       });
     }
 
@@ -116,6 +120,84 @@ router.post('/', requireAuth(), async (req, res) => {
     return res.status(500).json({
       message: 'Server error',
     });
+  }
+});
+
+router.post('/:resumeId/apply', requireAuth(), async (req, res) => {
+  try {
+    const { resumeId } = req.params;
+    const { recommendations, jobDescription } = req.body;
+
+    // 1. Validate inputs
+    if (!Array.isArray(recommendations) || recommendations.length === 0) {
+      return res
+        .status(400)
+        .json({ message: 'Select at least one recommendation' });
+    }
+
+    if (!jobDescription?.trim()) {
+      return res.status(400).json({ message: 'A job description is required' });
+    }
+
+    // 2. Find the user
+    const dbUser = await getDbUserFromAuth(req, prisma);
+
+    if (!dbUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // 3. Find the resume, only if it belongs to this user
+    const resume = await prisma.resume.findFirst({
+      where: {
+        id: resumeId,
+        userId: dbUser.id,
+      },
+      include: {
+        experiences: {
+          include: {
+            bullets: { orderBy: { order: 'asc' } },
+          },
+          orderBy: { order: 'asc' },
+        },
+        skillGroups: {
+          include: {
+            items: { orderBy: { order: 'asc' } },
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+
+    if (!resume) {
+      return res.status(404).json({ message: 'Resume not found' });
+    }
+
+    const aiOutput = await improveResumeWithAI({
+      resume,
+      jobDescription,
+      recommendations,
+    });
+
+    // The company doesn't change when applying suggestions, so carry it over
+    const revised = {
+      ...JSON.parse(aiOutput),
+      targetCompany: resume.targetCompany,
+    };
+
+    console.log('ATS revision notes:', revised.notes);
+
+    const savedResume = await saveGeneratedResume(
+      JSON.stringify(revised), // it expects a string, since it calls JSON.parse
+      resume,
+      dbUser.id,
+      resume.jobLink,
+      jobDescription,
+    );
+
+    return res.status(201).json(savedResume);
+  } catch (e) {
+    console.error('Failed to apply suggestions:', e);
+    return res.status(500).json({ message: 'Failed to apply suggestions' });
   }
 });
 

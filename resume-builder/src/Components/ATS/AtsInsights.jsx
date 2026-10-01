@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/useAppContext';
 import { useAtsContext } from '../../context/ats/AtsContext';
@@ -15,6 +15,7 @@ export const AtsInsights = () => {
     isAnalyzing,
     jobDescription_ATS,
     setJobDescription_ATS,
+    setAnalysisResult,
   } = useAtsContext();
 
   const { getToken } = useAuth();
@@ -59,7 +60,10 @@ export const AtsInsights = () => {
               <select
                 id="atsResume"
                 value={selectedResumeId_ATS}
-                onChange={(e) => setSelectedResumeId_ATS(e.target.value)}
+                onChange={(e) => {
+                  setSelectedResumeId_ATS(e.target.value);
+                  setAnalysisResult(null);
+                }}
                 className="h-11 rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-700 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200"
               >
                 <option value="">Select Resume</option>
@@ -153,7 +157,7 @@ export const AtsInsights = () => {
         </div>
       </div>
 
-      <AtsResults />
+      <AtsResults descriptionToUse={descriptionToUse} />
     </section>
   );
 };

@@ -1,12 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { AtsContext } from './AtsContext';
+import { useAppContext } from '../useAppContext';
+import { useUserContext } from '../user/UserContext';
+import { mapResumeToState } from '../../utils/helper';
 
 export function AtsProvider({ children }) {
+  const { setAllResumes, setCurrResume } = useAppContext();
+  const { setUserPane } = useUserContext();
+
   const [analysisResult, setAnalysisResult] = useState(null);
   const [selectedResumeId_ATS, setSelectedResumeId_ATS] = useState('');
-  const [jobLink_ATS, setJobLink_ATS] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [jobDescription_ATS, setJobDescription_ATS] = useState('');
+  const [isRevising, setIsRevising] = useState(false);
 
   const handleAnalyze = useCallback(
     async (getToken, jobDescription) => {
@@ -29,21 +36,69 @@ export function AtsProvider({ children }) {
         });
 
         const data = await res.json();
-        console.log(data);
 
         if (!res.ok) {
           console.error('ATS analysis failed:', data.message);
+          toast.error(
+            data?.message || 'ATS analysis failed. Please try again.',
+          );
           return;
         }
 
         setAnalysisResult(data);
       } catch (error) {
         console.error('Error analyzing resume:', error);
+        toast.error('ATS analysis failed. Please try again.');
       } finally {
         setIsAnalyzing(false);
       }
     },
     [selectedResumeId_ATS],
+  );
+
+  const reviseResume = useCallback(
+    async (getToken, recommendations, jobDescription) => {
+      if (!selectedResumeId_ATS || !recommendations?.length) return null;
+
+      setIsRevising(true);
+
+      try {
+        const token = await getToken();
+
+        const response = await fetch(`/api/ats/${selectedResumeId_ATS}/apply`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ recommendations, jobDescription }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          toast.error(
+            data?.message || 'Failed to apply suggestions. Please try again.',
+          );
+          return null;
+        }
+
+        setAllResumes((prev) => [...prev, data]);
+        setCurrResume(mapResumeToState(data));
+        setUserPane('resumeParser');
+        toast.success('Suggestions applied! Review your updated resume.', {
+          duration: 3000,
+        });
+        return data;
+      } catch (err) {
+        console.error('Failed to apply suggestions:', err);
+        toast.error('Failed to apply suggestions. Please try again.');
+        return null;
+      } finally {
+        setIsRevising(false);
+      }
+    },
+    [selectedResumeId_ATS, setAllResumes, setCurrResume, setUserPane],
   );
 
   const value = useMemo(
@@ -52,21 +107,22 @@ export function AtsProvider({ children }) {
       setAnalysisResult,
       selectedResumeId_ATS,
       setSelectedResumeId_ATS,
-      jobLink_ATS,
-      setJobLink_ATS,
+      jobDescription_ATS,
+      setJobDescription_ATS,
       isAnalyzing,
       setIsAnalyzing,
       handleAnalyze,
-      jobDescription_ATS,
-      setJobDescription_ATS,
+      isRevising,
+      reviseResume,
     }),
     [
       analysisResult,
       selectedResumeId_ATS,
-      jobLink_ATS,
+      jobDescription_ATS,
       isAnalyzing,
       handleAnalyze,
-      jobDescription_ATS,
+      isRevising,
+      reviseResume,
     ],
   );
 

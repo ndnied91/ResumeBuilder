@@ -1,9 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useAtsContext } from '../../context/ats/AtsContext';
 import { getScoreStyles } from './helper';
+import { useAuth } from '@clerk/clerk-react';
 
-const AtsResults = () => {
-  const { analysisResult } = useAtsContext();
+const AtsResults = ({ descriptionToUse }) => {
+  const { analysisResult, reviseResume, isRevising } = useAtsContext();
+  const { getToken } = useAuth();
 
   const [deselected, setDeselected] = useState([]);
 
@@ -167,12 +169,19 @@ const AtsResults = () => {
                 <ol className="mt-4 space-y-3">
                   {recommendations.map((item, index) => (
                     <li key={index}>
-                      <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-blue-50 px-4 py-3 text-sm text-gray-700 transition hover:bg-blue-100">
+                      <label
+                        className={`flex items-start gap-3 rounded-xl bg-blue-50 px-4 py-3 text-sm text-gray-700 transition ${
+                          isRevising
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'cursor-pointer hover:bg-blue-100'
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           checked={!deselected.includes(index)}
                           onChange={() => toggleRecommendation(index)}
-                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600"
+                          disabled={isRevising}
+                          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
                         />
                         <span>{item}</span>
                       </label>
@@ -182,14 +191,30 @@ const AtsResults = () => {
 
                 <button
                   type="button"
-                  disabled={selectedRecommendations.length === 0}
-                  onClick={() => console.log('apply:', selectedRecommendations)}
-                  className="mt-4 w-full cursor-pointer rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+                  disabled={selectedRecommendations.length === 0 || isRevising}
+                  aria-busy={isRevising}
+                  onClick={() =>
+                    reviseResume(
+                      getToken,
+                      selectedRecommendations,
+                      descriptionToUse,
+                    )
+                  }
+                  className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500/70"
                 >
-                  Apply {selectedRecommendations.length}{' '}
-                  {selectedRecommendations.length === 1
-                    ? 'suggestion'
-                    : 'suggestions'}
+                  {isRevising && (
+                    <span
+                      aria-hidden="true"
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                    />
+                  )}
+                  {isRevising
+                    ? 'Applying...'
+                    : `Apply ${selectedRecommendations.length} ${
+                        selectedRecommendations.length === 1
+                          ? 'suggestion'
+                          : 'suggestions'
+                      }`}
                 </button>
               </>
             ) : (
